@@ -14,7 +14,7 @@
   - [ ] Locate the sentence containing the answer --> input sentence 
   - [ ] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
   - [ ] Prune training set so that input sentence and question has 1+ word in common 
-  - [ ] Add <BOS> and <EOS>
+  - [ ] Add `<BOS>` and `<EOS>`
 - [ ] Splitting data 80:10:10 train,val,test
 - [ ] Create vocab + dataloader (input = python list of list of tokens) 
   - [ ] source side V (input sentence) : keep 45k most frequent tokens from train 
@@ -33,3 +33,20 @@
   - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3, Clip gradient at norm > 5
   - [ ] Implement train step 
   - [ ] Implement train loop 
+  
+## Notes 
+### SQuAD Raw Data structure 
+- `train_data` (loaded directly from json file) is a dictionary with 2 keys: "version" and "data". We only work with `train_data['data']`
+- `train_data['data']` is a list of dictionaries. Each dictionary corresponds to a single article.
+- `train_data['data'][i]` (each article) is a dictionary with 2 keys: "title" and "paragraphs". We are only interested in `train_data['data'][i]["paragraphs"]`
+- `train_data['data'][i]["paragraphs"]` is a list of dictionaries. Each dictionary corresponds to a single paragraph in the article. 
+- `train_data['data'][i]["paragraphs"][j]` is a dictionary with 2 keys: "qas" and "context". Let's call `train_data['data'][i]["paragraphs"][j]` a `paragraph`
+  - `paragraph['context']` is the raw text of the paragraph
+  - `paragraph['qas']` is a list of dictionaries. Each dictionary corresponds to a question-answer pair. 
+    - `paragraph['qas'][i]` is a dictionary with 4 keys: "question", "id", "answers", "is_impossible" 
+      - `paragraph['qas'][i]["question"]` is a raw string of the question. 
+      - `paragraph['qas'][i]["id"]` is the question-answer id. 
+      - `paragraph['qas'][i]["answers"]` is a list of dictionary. Each dictionary corresponds to an answer.
+        - `paragraph['qas'][i]["answers"][j]` is a dictionary with 2 keys: 'text' and 'answer_start'. Let's call `paragraph['qas'][i]["answers"][j]` an 'answer'
+          - `answer['text']` is the answer text 
+          - `answer['answer_start']` is the character index in the context where the text answer starts 
