@@ -14,11 +14,11 @@
   - [ ] Locate the sentence containing the answer --> input sentence 
   - [ ] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
   - [ ] Prune training set so that input sentence and question has 1+ word in common 
-  - [ ] Add `<BOS>` and `<EOS>`
 - [ ] Splitting data 80:10:10 train,val,test
-- [ ] Create vocab + dataloader (input = python list of list of tokens) 
-  - [ ] source side V (input sentence) : keep 45k most frequent tokens from train 
-  - [ ] target side V (question) : keep 28k most frequent tokens from train 
+- [ ] Create vocab + dataset + dataloader (input = python list of list of tokens) 
+  - [x] source side V (input sentence) : keep 45k most frequent tokens from train 
+  - [x] target side V (question) : keep 28k most frequent tokens from train 
+  - [ ] create dataset 
   - [ ] for both vocabs, replace unknown with <UNK>
 - [ ] Define the model ENCODER (input = pairs of input sentence (list of tokens) and target (list of tokens))
   - [ ] Embedding : d=300, GloVE pre-trained embeddings (NOT learned) 
