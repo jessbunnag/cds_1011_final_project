@@ -3,3 +3,12 @@
 ## Resources 
 - Learning to Ask: Neural Question Generation for Reading Comprehension by Xinya Du, Junru Shao, Claire Cardie: http://arxiv.org/abs/1705.00106
 - [Singularity setup doc](https://docs.google.com/document/d/12D09OvptZ3OIMpjm3k_reLL4sipCftfiEMwLAl2tkm8/edit?usp=sharing)
+
+## To-do list 
+- [x] Set up singularity instance
+- [ ] Run sample code on local 
+- [ ] Download GloVE word vectors and put it on Greene 
+- [ ] Write preprocessing datasets 
+- [ ] Define the model encoder 
+- [ ] Define the model decoder 
+- [ ] Define Seq2seq model (like in hw2) 
