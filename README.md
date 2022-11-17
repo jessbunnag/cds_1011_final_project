@@ -11,9 +11,9 @@
   - [ ] Filter questions with is_impossible = False only
   - [x] Tokenization and sentence splitting 
   - [ ] Lowercase the entire dataset
-  - [ ] Locate the sentence containing the answer --> input sentence 
+  - [x] Locate the sentence containing the answer --> input sentence 
   - [ ] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
-  - [ ] Prune training set so that input sentence and question has 1+ word in common 
+  - [x] Prune training set so that input sentence and question has 1+ word in common 
 - [ ] Splitting data 80:10:10 train,val,test
 - [ ] Create vocab + dataset + dataloader (input = python list of list of tokens) 
   - [x] source side V (input sentence) : keep 45k most frequent tokens from train 
