@@ -10,11 +10,11 @@
 - [x] Preprocessing (Note: we have decided to move forward using the author's proprocessed dataset using Stanford CoreNLP)
   - [x] Filter questions with is_impossible = False only
   - [x] Tokenization and sentence splitting 
-  - [ ] Lowercase the entire dataset
-  - [ ] Locate the sentence containing the answer --> input sentence 
-  - [ ] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
-  - [ ] Prune training set so that input sentence and question has 1+ word in common 
-  - [ ] Add <BOS> and <EOS>
+  - [x] Lowercase the entire dataset
+  - [x] Locate the sentence containing the answer --> input sentence 
+  - [x] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
+  - [x] Prune training set so that input sentence and question has 1+ word in common 
+  - [x] Add <BOS> and <EOS>
 - [x] Splitting data 80:10:10 train,val,test
 - [x] Create vocab + dataloader (input = python list of list of tokens) 
   - [x] source side V (input sentence) : keep 45k most frequent tokens from train 
@@ -27,10 +27,13 @@
 - [x] Define the model decoder 
   - [x] LSTM, hidden size = 600, num layer = 1
   - [ ] Add 2 layers for LSTM 
+  - [ ] Add dropout
   - [x] Attention based encoding 
-- [ ] Define Seq2seq model (like in hw2) 
+- [x] Define Seq2seq model (like in hw2) 
 - [ ] Training 
-  - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3, Clip gradient at norm > 5
+  - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
+  - [ ] Implement beam search
+  - [ ] Clip gradient at norm > 5
   - [ ] Implement train step 
   - [ ] Implement train loop 
   
