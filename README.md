@@ -7,14 +7,14 @@
 ## To-do list 
 - [x] Set up singularity instance
 - [x] Download GloVE word vectors and put it on Greene 
-- [ ] Preprocessing 
-  - [ ] Filter questions with is_impossible = False only
+- [x] Preprocessing (Note: we have decided to move forward using the author's proprocessed dataset using Stanford CoreNLP)
+  - [x] Filter questions with is_impossible = False only
   - [x] Tokenization and sentence splitting 
-  - [ ] Lowercase the entire dataset
+  - [x] Lowercase the entire dataset
   - [x] Locate the sentence containing the answer --> input sentence 
-  - [ ] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
+  - [x] If answer spans 2+ sentences, concatenate the sentences --> input sentence 
   - [x] Prune training set so that input sentence and question has 1+ word in common 
-- [ ] Splitting data 80:10:10 train,val,test
+- [x] Splitting data 80:10:10 train,val,test
 - [ ] Create vocab + dataset + dataloader (input = python list of list of tokens) 
   - [x] source side V (input sentence) : keep 45k most frequent tokens from train 
   - [x] target side V (question) : keep 28k most frequent tokens from train 
