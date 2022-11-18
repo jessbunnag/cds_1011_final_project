@@ -56,15 +56,15 @@ class AttnDecoder(nn.Module):
         
         self.encoder_attention_module = Attention_Module(self.hidden_size, self.hidden_size)
         
-    def forward(self, input, memory, encoder_output, xs_len, context_vec = None):
+    def forward(self, memory, encoder_output, xs_len, context_vec = None):
         # context_vec is initialized with the last hidden layer of the encoder 
         memory = memory.transpose(0, 1)
 
-        emb = self.embedding(input)
+        emb = self.embedding(encoder_output)
         emb = F.relu(emb) 
         
         emb = emb.transpose(0, 1)
-        return_scores = torch.empty(emb.size(0), emb.size(1), self.output_size).to(input.device)
+        return_scores = torch.empty(emb.size(0), emb.size(1), self.output_size).to(encoder_output.device)
         
         if context_vec is None:
             context_vec = torch.zeros([emb.size(1), self.hidden_size]).to(emb.device)
