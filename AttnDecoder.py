@@ -11,9 +11,11 @@ class Attention_Module(nn.Module):
 
     def forward(self, hidden, encoder_outs, src_lens):
         x = self.l1(hidden)
+        print(f'attention module forward x unsqueeze {x.unsqueeze(-1).shape}')
+        print(f'attention module forward encoder_outs {encoder_outs.shape}')
         att_score = torch.bmm(encoder_outs, x.unsqueeze(-1)); #this is bsz x seq x 1
         att_score = att_score.squeeze(-1); #this is bsz x seq
-        att_score = att_score.transpose(0, 1);
+        att_score = att_score.transpose(0, 1)
         
         seq_mask = self.sequence_mask(src_lens, 
                                     max_len=max(src_lens).item(), 
@@ -59,11 +61,12 @@ class AttnDecoder(nn.Module):
     def forward(self, memory, encoder_output, xs_len, context_vec = None):
         # context_vec is initialized with the last hidden layer of the encoder 
         # print(f'memory forward decoder {memory}')
-        memory = memory[0].transpose(0, 1) 
+        hidden = memory[0].transpose(0, 1) 
+        cell_state = memory[1].transpose(0, 1)
 
         print(f'encoder_output shape in forward decoder {encoder_output.shape}')
-        print(f'encoder_output type in forward decoder {encoder_output.type()}')
-        print(f'encoder_output in forward decoder {encoder_output}')
+        # print(f'encoder_output type in forward decoder {encoder_output.type()}')
+        # print(f'encoder_output in forward decoder {encoder_output}')
         # emb = self.embedding(encoder_output)
         # emb = F.relu(emb) 
 
@@ -78,15 +81,28 @@ class AttnDecoder(nn.Module):
 
         for t in range(encoder_output.size(0)):
             current_vec = encoder_output[t]
+            context_vec_t = context_vec[:,t,:] # dis what i meant  
 
-            current_vec = torch.cat([current_vec, context_vec], dim = 1)
-            selected_memory = memory[:, 0, :]
+            print(f'current vec {current_vec.shape}')
+            print(f'context vec {context_vec_t.shape}')
 
-            mem_out = self.memory_lstm(current_vec, selected_memory)
-    
-            context_vec, attention0 = self.encoder_attention_module(mem_out, encoder_output, xs_len)
+            # current_vec = torch.cat([current_vec, context_vec_t], dim = 1)
+            selected_memory = hidden[:, 0, :]
+            curr_cell = cell_state[:,0,:]
 
-            scores = self.linear1(context_vec)
+            print(f'before memory_lstm  ')
+            print(f'current vec {current_vec.shape}')
+            print(f'selected_memory {selected_memory.shape} ')
+            print(f'curr_cell {curr_cell.shape} ')
+            mem_out, curr_cell = self.memory_lstm(current_vec, (selected_memory, curr_cell))
+
+            print(f'before attention model ')
+            print(f'mem_out {mem_out.shape} ')
+            print(f'curr_cell {curr_cell.shape} ')
+            context_vec_t, attention0 = self.encoder_attention_module(mem_out, encoder_output, xs_len)
+            print(f'finish encoder attention module')
+
+            scores = self.linear1(context_vec_t) 
             scores = F.tanh(scores)
             scores = self.linear2(scores)
 
@@ -96,5 +112,6 @@ class AttnDecoder(nn.Module):
             return_scores[t] = scores
 
             memory = mem_out[:, None, :]
+
             
         return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec
