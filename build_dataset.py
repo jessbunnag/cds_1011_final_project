@@ -3,7 +3,7 @@ from torch.utils.data import Dataset, DataLoader
 
 import numpy as np
 from tqdm.notebook import tqdm
-from collections import Counter
+from collections import Counter, namedtuple
 import pandas as pd
 from functools import partial
 
@@ -55,7 +55,11 @@ class QAPair(Dataset):
         return len(self.main_df)
 
     def __getitem__(self, idx):
-        return (self.main_df.iloc[idx]['source_indized'], self.main_df.iloc[idx]['target_indized'])
+        return (self.main_df.iloc[idx]['source_indized'], 
+                len(self.main_df.iloc[idx]['source_indized']),
+                self.main_df.iloc[idx]['target_indized'],
+                len(self.main_df.iloc[idx]['target_indized'])
+                )
 
 # Dataset utils function
 def read_data(file_path):
@@ -109,12 +113,22 @@ def pad_list_of_tensors(list_of_tensors, pad_token):
 
 def pad_collate_fn(batch, pad_token):
     input_list = [torch.tensor(s[0]) for s in batch]
-    target_list = [torch.tensor(s[1]) for s in batch]
+    input_len_list = [s[1] for s in batch]
+
+    target_list = [torch.tensor(s[2]) for s in batch]
+    target_len_list = [s[3] for s in batch]
+
         
     input_tensor = pad_list_of_tensors(input_list, pad_token)
     target_tensor = pad_list_of_tensors(target_list, pad_token)
+
+    named_returntuple = namedtuple('namedtuple', ['input_vecs', 'input_lens', 'target_vecs', 'target_lens'])
     
-    return input_tensor, target_tensor
+    return named_returntuple(input_tensor, 
+                            torch.LongTensor(input_len_list),
+                            target_tensor,
+                            torch.LongTensor(target_len_list)
+                            ) 
 
 if __name__ == "main":
     main_data_path = "data/processed"
