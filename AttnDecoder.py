@@ -58,21 +58,26 @@ class AttnDecoder(nn.Module):
         
     def forward(self, memory, encoder_output, xs_len, context_vec = None):
         # context_vec is initialized with the last hidden layer of the encoder 
-        memory = memory.transpose(0, 1)
+        # print(f'memory forward decoder {memory}')
+        memory = memory[0].transpose(0, 1) 
 
-        emb = self.embedding(encoder_output)
-        emb = F.relu(emb) 
-        
-        emb = emb.transpose(0, 1)
-        return_scores = torch.empty(emb.size(0), emb.size(1), self.output_size).to(encoder_output.device)
+        print(f'encoder_output shape in forward decoder {encoder_output.shape}')
+        print(f'encoder_output type in forward decoder {encoder_output.type()}')
+        print(f'encoder_output in forward decoder {encoder_output}')
+        # emb = self.embedding(encoder_output)
+        # emb = F.relu(emb) 
+
+        # emb = emb.transpose(0, 1)?? 
+        encoder_output = encoder_output.transpose(0, 1)
+        return_scores = torch.empty(encoder_output.size(0), encoder_output.size(1), self.output_size).to(encoder_output.device)
         
         if context_vec is None:
-            context_vec = torch.zeros([emb.size(1), self.hidden_size]).to(emb.device)
+            context_vec = torch.zeros([encoder_output.size(1), self.hidden_size]).to(encoder_output.device)
 
         attn_wts_list = []
 
-        for t in range(emb.size(0)):
-            current_vec = emb[t]
+        for t in range(encoder_output.size(0)):
+            current_vec = encoder_output[t]
 
             current_vec = torch.cat([current_vec, context_vec], dim = 1)
             selected_memory = memory[:, 0, :]
@@ -90,6 +95,6 @@ class AttnDecoder(nn.Module):
             scores = self.softmax(scores)
             return_scores[t] = scores
 
-            memory = mem_out[:, None, :];
+            memory = mem_out[:, None, :]
             
         return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec

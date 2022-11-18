@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class BiLSTMEncoder(nn.Module):
-    """Encodes the input context. Based on code from Lab 6"""
-    def __init__(self, pretrained_vectors, input_size=300, hidden_size=600, numlayers=2):
+    """Encodes the input context. Based on code from Lab 6""" 
+    def __init__(self, pretrained_vectors, embed_size=300, hidden_size=600, numlayers=2):
         """Initialize encoder.
         :param input_size: size of embedding
         :param hidden_size: size of hidden layers
@@ -19,7 +19,7 @@ class BiLSTMEncoder(nn.Module):
         # pretrained glove embeddings
         self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         self.lstm = nn.LSTM(
-            input_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True
+            embed_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True
         )
 
     def forward(self, input, hidden=None):
@@ -27,6 +27,9 @@ class BiLSTMEncoder(nn.Module):
         :param input: (batchsize x seqlen) tensor of token indices.
         :param hidden: optional past hidden state
         """
+        # print(f'input in bilstm forward {input.shape}') 
+        # print(f'embedding weight {self.embedding.weight}') 
         embedded = self.embedding(input)
-        output, hidden = self.lstm(embedded, hidden)
+        # print(f'embedded in bilstm forward {embedded.shape}') 
+        output, hidden = self.lstm(embedded.float(), hidden) 
         return output, hidden
