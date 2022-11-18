@@ -22,14 +22,16 @@ class BiLSTMEncoder(nn.Module):
             embed_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True
         )
 
-    def forward(self, input, hidden=None):
+    def forward(self, input):
         """Return encoded state.
         :param input: (batchsize x seqlen) tensor of token indices.
         :param hidden: optional past hidden state
         """
-        # print(f'input in bilstm forward {input.shape}') 
-        # print(f'embedding weight {self.embedding.weight}') 
+        print(f'===bilstm forward===') 
+        print(f'input shape {input.shape}') 
         embedded = self.embedding(input)
-        # print(f'embedded in bilstm forward {embedded.shape}') 
-        output, hidden = self.lstm(embedded.float(), hidden) 
+        print(f'embedded shape {embedded.shape}') 
+        output, (hidden, _) = self.lstm(embedded) 
+        print(f'output shape {output.shape}') 
+        print(f'hidden shape {hidden.shape}')
         return output, hidden

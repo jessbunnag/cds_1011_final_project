@@ -42,13 +42,11 @@ class Attention_Module(nn.Module):
 
 
 class AttnDecoder(nn.Module):
-    def __init__(self, pretrained_vectors, output_size, hidden_size):
+    def __init__(self, output_size, hidden_size):
         super(AttnDecoder, self).__init__()
 
         self.output_size = output_size
         self.hidden_size = hidden_size
-
-        self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         
         self.memory_lstm = nn.LSTMCell(self.hidden_size * 2, self.hidden_size, bias=True)
 
