@@ -27,7 +27,7 @@ class BiLSTMEncoder(nn.Module):
         :param input: (batchsize x seqlen) tensor of token indices.
         :param hidden: optional past hidden state
         """
-        print(f'===bilstm forward===') 
+        print(f'===ENCODER FORWARD===') 
         print(f'input shape {input.shape}') 
         embedded = self.embedding(input)
         print(f'embedded shape {embedded.shape}') 

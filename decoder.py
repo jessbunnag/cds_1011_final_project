@@ -10,6 +10,8 @@ class Attention_Module(nn.Module):
         self.l2 = nn.Linear(hidden_dim + output_dim, output_dim, bias=False)
 
     def forward(self, hidden, encoder_outs, src_lens):
+        print(f"ATTENTION FORWARD")
+        print(f"hidden shape {hidden}")
         x = self.l1(hidden)
         print(f'attention module forward x unsqueeze {x.unsqueeze(-1).shape}')
         print(f'attention module forward encoder_outs {encoder_outs.shape}')
@@ -42,19 +44,41 @@ class Attention_Module(nn.Module):
 
 
 class AttnLSTMDecoder(nn.Module):
-    def __init__(self, pretrained_vectors, output_size, hidden_size):
+    def __init__(self, hidden_size, output_size, num_layers):
         super(AttnLSTMDecoder, self).__init__()
 
         self.output_size = output_size
         self.hidden_size = hidden_size
         
-        self.lstm_cell1 = nn.LSTMCell(self.hidden_size * 2, self.hidden_size, bias=True)
+        self.lstm_cell1 = nn.LSTMCell(self.hidden_size * 2 * 2, self.hidden_size, bias=True)
 
-        self.softmax = nn.LogSoftmax(dim=1)
+        # self.softmax = nn.LogSoftmax(dim=1)
         
         self.encoder_attention_module = Attention_Module(self.hidden_size, self.hidden_size)
         
-    def forward(self, memory, encoder_output, xs_len, context_vec = None):
+    def forward(self, encoder_outs, hidden, targets_len):
+        print(f'===DECODER FORWARD===')
+
+        # for each time step (of target) : this should be the target length of the batched targets 
+        for i in range(targets_len):
+            # TODO: compute attention and c_t 
+            # input = hidden, b_i enc_output 
+            print(f'before calling attention')
+            c_t, attn_scores = self.encoder_attention_module(hidden, encoder_outs, targets_len)
+            print(f'c_t shape {c_t.shape}')
+            print(f'attn_scores {attn_scores.shape}')
+
+
+
+            # TODO: concat c_t and hidden 
+            # TODO: pass into LSTM cell 
+
+            # update hidden 
+
+            # TODO: do beam search at each time step 
+
 
             
-        return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec
+
+        return 
+        # return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec
