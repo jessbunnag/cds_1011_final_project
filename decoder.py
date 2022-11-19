@@ -11,7 +11,8 @@ class Attention_Module(nn.Module):
 
     def forward(self, hidden, encoder_outs, src_lens):
         print(f"ATTENTION FORWARD")
-        print(f"hidden shape {hidden}")
+        print(f"hidden shape {hidden.shape}")
+        print(f"encoder_outs shape {encoder_outs.shape}")
         x = self.l1(hidden)
         print(f'attention module forward x unsqueeze {x.unsqueeze(-1).shape}')
         print(f'attention module forward encoder_outs {encoder_outs.shape}')
@@ -44,11 +45,14 @@ class Attention_Module(nn.Module):
 
 
 class AttnLSTMDecoder(nn.Module):
-    def __init__(self, hidden_size, output_size, num_layers):
+    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers):
         super(AttnLSTMDecoder, self).__init__()
 
         self.output_size = output_size
         self.hidden_size = hidden_size
+
+        # pretrained glove embeddings
+        self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         
         self.lstm_cell1 = nn.LSTMCell(self.hidden_size * 2 * 2, self.hidden_size, bias=True)
 
@@ -56,7 +60,7 @@ class AttnLSTMDecoder(nn.Module):
         
         self.encoder_attention_module = Attention_Module(self.hidden_size, self.hidden_size)
         
-    def forward(self, encoder_outs, hidden, targets_len):
+    def forward(self, input, encoder_outs, hidden, targets_len):
         print(f'===DECODER FORWARD===')
 
         # for each time step (of target) : this should be the target length of the batched targets 
@@ -68,12 +72,13 @@ class AttnLSTMDecoder(nn.Module):
             print(f'c_t shape {c_t.shape}')
             print(f'attn_scores {attn_scores.shape}')
 
+            # TODO: calculate (updated) hidden state from LSTM  
 
 
             # TODO: concat c_t and hidden 
-            # TODO: pass into LSTM cell 
+            
 
-            # update hidden 
+            # TODO: pass concat of c_t;hidden into linear --> tanh --> linear --> softmax 
 
             # TODO: do beam search at each time step 
 
