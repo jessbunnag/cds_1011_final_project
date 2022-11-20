@@ -79,6 +79,33 @@ class AttnLSTMDecoder(nn.Module):
         self.l2 = nn.Linear(hidden_size, out_vocab_size, bias=False)
         
         self.encoder_attention_module = AttentionModule(self.hidden_size)
+
+    def beamsearch(self, batch_sequences, batch_log_probs, k=3):
+        cur_batch_sequences = []
+
+        print('===beam search===')
+        # loop through every example in the batch with its corresponding probabilities 
+        for ex_log_probs in batch_log_probs:
+            all_candidates = list()
+
+            print('batch seq at b: ', batch_sequences)
+
+            # expand on each candidate in the current example of the batch
+            for b in range(len(batch_sequences)):
+                print('batch sequence at b', batch_sequences[b])
+                seq, score = batch_sequences[b][0], batch_sequences[b][1]
+                for j in range(len(ex_log_probs)):
+                    candidate = [seq + [j], score - ex_log_probs[j].item()]
+                    all_candidates.append(candidate)
+
+            # order all candidates by score
+            ordered = sorted(all_candidates, key=lambda tup:tup[1])
+            print(f'top 3 sequences in batch{b}', ordered[:k])
+
+            # select k best
+            cur_batch_sequences.append(ordered[:k])
+
+        return cur_batch_sequences
         
     def forward(self, input, encoder_outs, hidden_init, targets_len):
         # print(f'===DECODER FORWARD===')
@@ -95,8 +122,9 @@ class AttnLSTMDecoder(nn.Module):
         # print(f'h_out shape {h_out.shape}')
 
         T = output.shape[1]
+        print('T:', T)
 
-        log_probs = []
+        batch_sequences = [[[list(), 0.0]]]
 
         # for each time step (of target) : this should be the target length of the batched targets 
         for t in range(T):
@@ -116,15 +144,13 @@ class AttnLSTMDecoder(nn.Module):
             fc_out = self.l2(F.tanh(self.l1(h_t_c_t)))
             # print(f'fc_out {fc_out.shape}')
             log_prob = F.log_softmax(fc_out) # --> [0, 1, .., 28K] --> [0.2, 0.8, ..., 0.5]
-            # print(f'log_prob {log_prob.shape}')
+            print(f'log_prob {log_prob.shape}')
             # print(f'log_prob {log_prob}')
 
             # TODO: do beam search at each time step 
             # k = 3, take top k values (and indices) from the log_prob list 
-
-            # log_probs.append(log_prob)
-
             
+            batch_sequences = self.beamsearch(batch_sequences, log_prob)
 
         return 
         # return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec
