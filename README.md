@@ -26,7 +26,7 @@
   - [x] Concat last hidden state of forward and backward pass --> encoder's output (for decoder) 
 - [x] Define the model decoder 
   - [x] LSTM, hidden size = 600, num layer = 1
-  - [ ] Add 2 layers for LSTM 
+  - [x] Add 2 layers for LSTM 
   - [x] Add dropout
   - [x] Attention based encoding 
   - [ ] Implement beam search
