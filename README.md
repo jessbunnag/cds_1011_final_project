@@ -21,7 +21,8 @@
   - [x] target side V (question) : keep 28k most frequent tokens from train 
   - [x] for both vocabs, replace unknown with <UNK>
 - [x] Define the model ENCODER (input = pairs of input sentence (list of tokens) and target (list of tokens))
-  - [x] Embedding : d=300, GloVE pre-trained embeddings (NOT learned) 
+  - [x] Embedding : d=50, GloVE pre-trained embeddings (NOT learned) 
+  - [ ] Embedding : d=300, GloVE pre-trained embeddings (NOT learned) 
   - [x] Bi directional LSTM, hidden size = 600, num layer = 2
   - [x] Concat last hidden state of forward and backward pass --> encoder's output (for decoder) 
 - [x] Define the model decoder 
@@ -30,14 +31,18 @@
   - [x] Add dropout
   - [x] Attention based encoding 
   - [ ] Implement beam search
+  - [ ] Figure out if we need attention mask
 - [x] Define Seq2seq model (like in hw2) 
 - [ ] Training 
   - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
   - [ ] Post-processing with the replacement of UNK
   - [ ] Learning rate update
   - [ ] Clip gradient at norm > 5
-  - [ ] Implement train step 
-  - [ ] Implement train loop 
+  - [x] Implement train step 
+  - [x] Implement train loop  
+- [ ] Inference 
+  - [ ] Implement beam search at inference 
+  - [ ] Implement evaluation metric 
   
 ## Notes 
 ### SQuAD Raw Data structure 
