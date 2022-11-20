@@ -18,7 +18,7 @@ class AttentionModule(nn.Module):
         att_score = torch.bmm(hidden, att_score.transpose(1,2)) #[128, 1, L]
         # print(f"att_score shape {att_score.shape}")
 
-        attn_scores = F.softmax(att_score.squeeze()).unsqueeze(2)
+        attn_scores = F.softmax(att_score.squeeze(), dim=1).unsqueeze(2)
         # print(f"att_score after softmax shape {attn_scores.shape}")
 
         # TODO: confirm whether we need sequence mask 
@@ -113,18 +113,20 @@ class AttnLSTMDecoder(nn.Module):
             # print(f'h_t_c_t {h_t_c_t.shape}')
         
             # pass concat of c_t;h_t into linear --> tanh --> linear --> softmax 
-            fc_out = self.l2(F.tanh(self.l1(h_t_c_t)))
+            fc_out = self.l2(torch.tanh(self.l1(h_t_c_t)))
             # print(f'fc_out {fc_out.shape}')
-            log_prob = F.log_softmax(fc_out) # --> [0, 1, .., 28K] --> [0.2, 0.8, ..., 0.5]
-            # print(f'log_prob {log_prob.shape}')
+            log_prob = F.log_softmax(fc_out,  dim=1) # --> [0, 1, .., 28K] --> [0.2, 0.8, ..., 0.5]
+            # print(f'log_prob shape {log_prob.shape}')
             # print(f'log_prob {log_prob}')
+
+            log_probs.append(log_prob)
 
             # TODO: do beam search at each time step 
             # k = 3, take top k values (and indices) from the log_prob list 
 
-            # log_probs.append(log_prob)
+        log_probs_tensor = torch.stack(log_probs, dim=1)
+        # print(f'log_probs_tensor {log_probs_tensor.shape}')
 
-            
-
-        return 
+        # TODO: return other variables 
+        return log_probs_tensor, h_out
         # return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec
