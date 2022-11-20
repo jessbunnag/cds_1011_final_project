@@ -29,10 +29,10 @@
   - [ ] Add 2 layers for LSTM 
   - [x] Add dropout
   - [x] Attention based encoding 
+  - [ ] Implement beam search
 - [x] Define Seq2seq model (like in hw2) 
 - [ ] Training 
   - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
-  - [ ] Implement beam search
   - [ ] Post-processing with the replacement of UNK
   - [ ] Learning rate update
   - [ ] Clip gradient at norm > 5
