@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class Attention_Module(nn.Module):
+class AttentionModule(nn.Module):
 
     def __init__(self, hidden_dim, output_dim):
         super(Attention_Module, self).__init__()
@@ -45,7 +45,7 @@ class Attention_Module(nn.Module):
 
 
 class AttnLSTMDecoder(nn.Module):
-    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers):
+    def __init__(self, pretrained_vectors, embed_size, hidden_size, output_size, num_layers):
         super(AttnLSTMDecoder, self).__init__()
 
         self.output_size = output_size
@@ -55,35 +55,49 @@ class AttnLSTMDecoder(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         
         self.lstm_cell1 = nn.LSTMCell(self.hidden_size * 2 * 2, self.hidden_size, bias=True)
+        self.lstm = nn.LSTM(
+            embed_size, hidden_size, num_layers=num_layers, batch_first=True
+        )
 
-        # self.softmax = nn.LogSoftmax(dim=1)
+        self.l1 = nn.Linear(hidden_size*2, hidden_size, bias=False) # TODO: change l1 output size
+        self.l2 = nn.Linear(hidden_size, output_size, bias=False)
         
-        self.encoder_attention_module = Attention_Module(self.hidden_size, self.hidden_size)
+        self.encoder_attention_module = AttentionModule(self.hidden_size, self.hidden_size)
         
-    def forward(self, input, encoder_outs, hidden, targets_len):
+    def forward(self, input, encoder_outs, hidden_init, targets_len):
         print(f'===DECODER FORWARD===')
+        print(f'input shape {input.shape}') 
+        embedded = self.embedding(input)
+
+        print(f'embedded shape {embedded.shape}') 
+        output, (h_out, _) = self.lstm(embedded, hidden_init) 
+        print(f'output shape {output.shape}') 
+        print(f'h_out shape {h_out.shape}')
+
+        T = output.shape[1]
+
+        log_probs = []
 
         # for each time step (of target) : this should be the target length of the batched targets 
-        for i in range(targets_len):
-            # TODO: compute attention and c_t 
+        for t in range(T):
+            # compute attention and c_t 
             # input = hidden, b_i enc_output 
+            h_t = output[:, t, :].squeeze()
             print(f'before calling attention')
-            c_t, attn_scores = self.encoder_attention_module(hidden, encoder_outs, targets_len)
+            c_t, attn_scores = self.encoder_attention_module(h_t, encoder_outs, targets_len)
             print(f'c_t shape {c_t.shape}')
             print(f'attn_scores {attn_scores.shape}')
 
-            # TODO: calculate (updated) hidden state from LSTM  
+            # concat c_t and h_t
+            h_t_c_t = torch.cat([h_t, c_t], dim=1) 
+        
+            # pass concat of c_t;h_t into linear --> tanh --> linear --> softmax 
+            fc_out = self.l2(F.tanh(self.l1(h_t_c_t)))
+            log_prob = F.log_softmax(fc_out)
 
-
-            # TODO: concat c_t and hidden 
-            
-
-            # TODO: pass concat of c_t;hidden into linear --> tanh --> linear --> softmax 
+            log_probs.append(log_prob)
 
             # TODO: do beam search at each time step 
 
-
-            
-
-        return 
+        return torch.stack(log_probs)
         # return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec

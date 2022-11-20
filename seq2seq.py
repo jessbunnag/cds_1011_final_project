@@ -15,10 +15,13 @@ class Seq2Seq(nn.Module):
         enc_output, enc_hidden = self.enc(answer)
         # calculate sentence encoder's output for init decoder hidden
         # concat last hidden state of forward and backward pass 
-        enc_out_repr = torch.cat([enc_hidden[-2, :, :], enc_hidden[-1, :, :]], dim=1)
+        enc_out_repr = torch.cat([
+            enc_hidden[-2, :, :].unsqueeze(0), 
+            enc_hidden[-1, :, :].unsqueeze(0)
+        ], dim=0)
         print(f'enc_out_repr {enc_out_repr.shape}')
         
-        _ = self.dec(input=question, encoder_outs=enc_output, hidden=enc_out_repr, targets_len=src_lens)
+        _ = self.dec(input=question, encoder_outs=enc_output, hidden_init=enc_out_repr, targets_len=src_lens)
         
         # return decoder_output, decoder_hidden
         return
