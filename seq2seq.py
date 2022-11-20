@@ -19,9 +19,9 @@ class Seq2Seq(nn.Module):
             enc_hidden[-2, :, :].unsqueeze(0), 
             enc_hidden[-1, :, :].unsqueeze(0)
         ], dim=0) # "s" in the paper
-        print(f'enc_out_repr {enc_out_repr.shape}')
+        # print(f'enc_out_repr {enc_out_repr.shape}')
         
-        _ = self.dec(input=question, encoder_outs=enc_output, hidden_init=enc_out_repr, targets_len=src_lens)
+        self.dec(input=question, encoder_outs=enc_output, hidden_init=enc_out_repr, targets_len=src_lens)
         
         # return decoder_output, decoder_hidden
         return

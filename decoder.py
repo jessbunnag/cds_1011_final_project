@@ -15,7 +15,7 @@ class AttentionModule(nn.Module):
 
         att_score = self.l1(encoder_outs) #[128, 600, L]
         # print(f"l1(encoder_outs) transpose shape {att_score.transpose(1,2).shape}")
-        att_score = torch.bmm(hidden, att_score.transpose(1,2)) #[128, 1, 84]
+        att_score = torch.bmm(hidden, att_score.transpose(1,2)) #[128, 1, L]
         # print(f"att_score shape {att_score.shape}")
 
         attn_scores = F.softmax(att_score.squeeze()).unsqueeze(2)
@@ -81,18 +81,18 @@ class AttnLSTMDecoder(nn.Module):
         self.encoder_attention_module = AttentionModule(self.hidden_size)
         
     def forward(self, input, encoder_outs, hidden_init, targets_len):
-        print(f'===DECODER FORWARD===')
-        print(f'input shape {input.shape}') 
+        # print(f'===DECODER FORWARD===')
+        # print(f'input shape {input.shape}') 
         embedded = self.embedding(input)
 
         cell_init = torch.zeros_like(hidden_init)
-        print(f'embedded shape {embedded.shape}') 
-        print(f'hidden_init {hidden_init.shape}')
-        print(f'cell_init {cell_init.shape}')
+        # print(f'embedded shape {embedded.shape}') 
+        # print(f'hidden_init {hidden_init.shape}')
+        # print(f'cell_init {cell_init.shape}')
 
         output, (h_out, _) = self.lstm(embedded, (hidden_init,cell_init)) 
-        print(f'output shape {output.shape}') 
-        print(f'h_out shape {h_out.shape}')
+        # print(f'output shape {output.shape}') 
+        # print(f'h_out shape {h_out.shape}')
 
         T = output.shape[1]
 
@@ -103,17 +103,21 @@ class AttnLSTMDecoder(nn.Module):
             # compute attention and c_t 
             # input = hidden, b_i enc_output 
             h_t = output[:, t, :]
-            print(f'h_t shape {h_t.shape}')
+            # print(f'h_t shape {h_t.shape}')
             c_t, attn_scores = self.encoder_attention_module(h_t.unsqueeze(1), encoder_outs, targets_len)
-            print(f'c_t shape {c_t.shape}')
-            print(f'attn_scores {attn_scores.shape}')
+            # print(f'c_t shape {c_t.shape}')
+            # print(f'attn_scores {attn_scores.shape}')
 
             # concat c_t and h_t
             h_t_c_t = torch.cat([h_t, c_t], dim=1) 
+            # print(f'h_t_c_t {h_t_c_t.shape}')
         
             # pass concat of c_t;h_t into linear --> tanh --> linear --> softmax 
             fc_out = self.l2(F.tanh(self.l1(h_t_c_t)))
+            # print(f'fc_out {fc_out.shape}')
             log_prob = F.log_softmax(fc_out) # --> [0, 1, .., 28K] --> [0.2, 0.8, ..., 0.5]
+            # print(f'log_prob {log_prob.shape}')
+            # print(f'log_prob {log_prob}')
 
             # TODO: do beam search at each time step 
             # k = 3, take top k values (and indices) from the log_prob list 
