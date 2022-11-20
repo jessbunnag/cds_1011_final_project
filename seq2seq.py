@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from encoder import BiLSTMEncoder
 from decoder import AttnDecoder
-
+ 
 class Seq2Seq(nn.Module):
     def __init__(self, pretrained_vectors, output_size, input_size=300, hidden_size=600, num_layers=2):
         super(Seq2Seq, self).__init__()
