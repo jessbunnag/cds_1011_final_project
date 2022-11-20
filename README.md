@@ -27,12 +27,14 @@
 - [x] Define the model decoder 
   - [x] LSTM, hidden size = 600, num layer = 1
   - [ ] Add 2 layers for LSTM 
-  - [ ] Add dropout
+  - [x] Add dropout
   - [x] Attention based encoding 
 - [x] Define Seq2seq model (like in hw2) 
 - [ ] Training 
   - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
   - [ ] Implement beam search
+  - [ ] Post-processing with the replacement of UNK
+  - [ ] Learning rate update
   - [ ] Clip gradient at norm > 5
   - [ ] Implement train step 
   - [ ] Implement train loop 
