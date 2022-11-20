@@ -6,20 +6,21 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class BiLSTMEncoder(nn.Module):
     """Encodes the input context. Based on code from Lab 6""" 
-    def __init__(self, pretrained_vectors, embed_size=300, hidden_size=600, numlayers=2):
+    def __init__(self, pretrained_vectors, hidden_size=600, numlayers=2):
         """Initialize encoder.
         :param input_size: size of embedding
         :param hidden_size: size of hidden layers
         :param numlayers: number of layers
         """
         super().__init__()
+        self.embed_size = pretrained_vectors.shape[1]
         # for bidirectional encoding, divide hidden size by 2
         self.hidden_size = hidden_size // 2
 
         # pretrained glove embeddings
         self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         self.lstm = nn.LSTM(
-            embed_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True
+            self.embed_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True
         )
 
     def forward(self, input):

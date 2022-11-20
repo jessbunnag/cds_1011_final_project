@@ -5,10 +5,10 @@ from encoder import BiLSTMEncoder
 from decoder import AttnLSTMDecoder
 
 class Seq2Seq(nn.Module):
-    def __init__(self, pretrained_vectors, enc_embed_size, hidden_size, output_size, num_layers=2):
+    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers=2):
         super(Seq2Seq, self).__init__()
 
-        self.enc = BiLSTMEncoder(pretrained_vectors['enc'], enc_embed_size, hidden_size, num_layers)
+        self.enc = BiLSTMEncoder(pretrained_vectors['enc'], hidden_size, num_layers)
         self.dec = AttnLSTMDecoder(pretrained_vectors['dec'], hidden_size, output_size, num_layers)
 
     def forward(self, answer, question, src_lens, tgt_lens):    
@@ -18,7 +18,7 @@ class Seq2Seq(nn.Module):
         enc_out_repr = torch.cat([
             enc_hidden[-2, :, :].unsqueeze(0), 
             enc_hidden[-1, :, :].unsqueeze(0)
-        ], dim=0)
+        ], dim=0) # "s" in the paper
         print(f'enc_out_repr {enc_out_repr.shape}')
         
         _ = self.dec(input=question, encoder_outs=enc_output, hidden_init=enc_out_repr, targets_len=src_lens)
