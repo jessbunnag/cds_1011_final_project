@@ -4,25 +4,31 @@ import torch.nn.functional as F
 
 class AttentionModule(nn.Module):
 
-    def __init__(self, hidden_dim, output_dim):
+    def __init__(self, hidden_dim):
         super(AttentionModule, self).__init__()
-        self.l1 = nn.Linear(hidden_dim, output_dim, bias=False)
-        self.l2 = nn.Linear(hidden_dim + output_dim, output_dim, bias=False)
+        self.l1 = nn.Linear(hidden_dim*2, hidden_dim, bias=False)
 
     def forward(self, hidden, encoder_outs, src_lens):
-        print(f"===ATTENTION FORWARD===")
-        print(f"hidden shape {hidden.shape}")
-        print(f"encoder_outs shape {encoder_outs.shape}")
+        # print(f"===ATTENTION FORWARD===")
+        # print(f"hidden shape {hidden.shape}")
+        # print(f"encoder_outs shape {encoder_outs.shape}")
 
-        # hidden (1,600)
-        # W (600, ?)
-        # b_i ()
+        att_score = self.l1(encoder_outs) #[128, 600, L]
+        # print(f"l1(encoder_outs) transpose shape {att_score.transpose(1,2).shape}")
+        att_score = torch.bmm(hidden, att_score.transpose(1,2)) #[128, 1, 84]
+        # print(f"att_score shape {att_score.shape}")
 
+        attn_scores = F.softmax(att_score.squeeze()).unsqueeze(2)
+        # print(f"att_score after softmax shape {attn_scores.shape}")
 
+        # TODO: confirm whether we need sequence mask 
 
+        # print(f"encoder_outs transpose shape {encoder_outs.transpose(1, 2).shape}")
+        context = torch.bmm(encoder_outs.transpose(1, 2), attn_scores)
+        # print(f'context shape {context.shape}')
+        return context.squeeze(), attn_scores.squeeze()
 
-
-
+        # OLD IMPLEMENTATION 
         # x = self.l1(hidden)
         # print(f'x unsqueeze {x.unsqueeze(-1).shape}')
         # att_score = torch.bmm(encoder_outs, x.unsqueeze(-1)); #this is bsz x seq x 1
@@ -39,7 +45,7 @@ class AttentionModule(nn.Module):
         # attn_scores = F.softmax(masked_att, dim=0)
         # x = (attn_scores.unsqueeze(2) * encoder_outs.transpose(0, 1)).sum(dim=0)
         # x = torch.tanh(self.l2(torch.cat((x, hidden), dim=1)))
-        return x, attn_scores
+        # return x, attn_scores
 
     def sequence_mask(self, sequence_length, max_len=None, device = torch.device('cuda')):
         if max_len is None:
@@ -54,12 +60,12 @@ class AttentionModule(nn.Module):
 
 
 class AttnLSTMDecoder(nn.Module):
-    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers):
+    def __init__(self, pretrained_vectors, hidden_size, enc_out_size, out_vocab_size, num_layers):
         super(AttnLSTMDecoder, self).__init__()
 
         self.embed_size = pretrained_vectors.shape[1]
         self.hidden_size = hidden_size
-        self.output_size = output_size
+        self.output_size = out_vocab_size
 
         # pretrained glove embeddings
         self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
@@ -69,10 +75,10 @@ class AttnLSTMDecoder(nn.Module):
             self.embed_size, hidden_size, num_layers=num_layers, batch_first=True
         )
 
-        self.l1 = nn.Linear(hidden_size*2, hidden_size, bias=False) # TODO: change l1 output size
-        self.l2 = nn.Linear(hidden_size, output_size, bias=False)
+        self.l1 = nn.Linear(hidden_size+enc_out_size, hidden_size, bias=False) # TODO: change l1 output size
+        self.l2 = nn.Linear(hidden_size, out_vocab_size, bias=False)
         
-        self.encoder_attention_module = AttentionModule(self.hidden_size, self.hidden_size)
+        self.encoder_attention_module = AttentionModule(self.hidden_size)
         
     def forward(self, input, encoder_outs, hidden_init, targets_len):
         print(f'===DECODER FORWARD===')
@@ -96,9 +102,9 @@ class AttnLSTMDecoder(nn.Module):
         for t in range(T):
             # compute attention and c_t 
             # input = hidden, b_i enc_output 
-            h_t = output[:, t, :].squeeze()
-            print(f'h_t shape {h_t}')
-            c_t, attn_scores = self.encoder_attention_module(h_t, encoder_outs, targets_len)
+            h_t = output[:, t, :]
+            print(f'h_t shape {h_t.shape}')
+            c_t, attn_scores = self.encoder_attention_module(h_t.unsqueeze(1), encoder_outs, targets_len)
             print(f'c_t shape {c_t.shape}')
             print(f'attn_scores {attn_scores.shape}')
 
