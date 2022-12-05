@@ -1,5 +1,9 @@
 # 1011 Final Project - Question Generation 
 
+## How to run the model
+1. Run `python load_pretrained.py` to create parsed GloVe embeddings. Make sure you have dir `/embeddings` in your project dir
+2. Run cells in `train.ipynb` to run the train pipeline.
+
 ## Resources 
 - Learning to Ask: Neural Question Generation for Reading Comprehension by Xinya Du, Junru Shao, Claire Cardie: http://arxiv.org/abs/1705.00106
 - [Singularity setup doc](https://docs.google.com/document/d/12D09OvptZ3OIMpjm3k_reLL4sipCftfiEMwLAl2tkm8/edit?usp=sharing)
@@ -22,7 +26,7 @@
   - [x] for both vocabs, replace unknown with <UNK>
 - [x] Define the model ENCODER (input = pairs of input sentence (list of tokens) and target (list of tokens))
   - [x] Embedding : d=50, GloVE pre-trained embeddings (NOT learned) 
-  - [ ] Embedding : d=300, GloVE pre-trained embeddings (NOT learned) 
+  - [x] Embedding : d=300, GloVE pre-trained embeddings (NOT learned) 
   - [x] Bi directional LSTM, hidden size = 600, num layer = 2
   - [x] Concat last hidden state of forward and backward pass --> encoder's output (for decoder) 
 - [x] Define the model decoder 
@@ -36,7 +40,7 @@
 - [ ] Training 
   - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
   - [ ] Post-processing with the replacement of UNK
-  - [ ] Learning rate update
+  - [x] Learning rate update
   - [ ] Clip gradient at norm > 5
   - [x] Implement train step 
   - [x] Implement train loop  
