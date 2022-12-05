@@ -15,9 +15,9 @@ class Vocabulary(object):
         self.ids = {}
 
         # add special tokens 
+        self.tokens.append('<pad>')
         self.tokens.append('<bos>')
         self.tokens.append('<eos>')
-        self.tokens.append('<pad>')
         self.tokens.append('<unk>')
 
         # add all the tokens 
@@ -31,7 +31,7 @@ class Vocabulary(object):
         self.ids = {token: id for id, token in enumerate(self.tokens)}
 
     def get_id(self, w):
-        return self.ids[w]
+        return self.ids[w] if w in self.ids else self.get_id('<unk>')
 
     def get_token(self, id):
         return self.tokens[id]
@@ -40,16 +40,16 @@ class Vocabulary(object):
         return [self.tokens[i] for i in list_id]
 
     def encode_token2idx(self, list_token):
-        return [self.ids[tok] if tok in self.ids else self.get_id('<unk>') for tok in list_token]
+        return [self.get_id(tok) for tok in list_token]
 
     def __len__(self):
         return len(self.tokens)
 
 
 class QAPair(Dataset):
-    def __init__(self, file_path):
-        self.main_df, self.answer_vocab, self.question_vocab = load_qa_data(file_path)
-        self.pad_idx = self.answer_vocab.get_id('<pad>')
+    def __init__(self, file_path, vocab):
+        self.main_df = load_qa_data(file_path, vocab)
+        self.pad_idx = vocab['source'].get_id('<pad>')
 
     def __len__(self):
         return len(self.main_df)
@@ -62,6 +62,22 @@ class QAPair(Dataset):
                 )
 
 # Dataset utils function
+def load_qa_data(file_path, vocab):
+    # read data 
+    answer_lil = read_data(file_path['source'])
+    question_lil = read_data(file_path['target'])
+
+    # save list of words 
+    main_df = pd.DataFrame()
+    main_df['source_data'] = answer_lil
+    main_df['target_data'] = question_lil
+
+    # convert words to idx for each dataset
+    main_df['source_indized'] = token2index_dataset(answer_lil, vocab['source'])
+    main_df['target_indized'] = token2index_dataset(question_lil, vocab['target'])
+
+    return main_df
+
 def read_data(file_path):
     with open(file_path, 'r') as f:
         dataset = []
@@ -78,25 +94,16 @@ def token2index_dataset(dataset_lil, vocab):
 
     return index_lil
 
-def load_qa_data(file_path):
+def build_train_vocab(file_path):
     # read data 
-    answer_lil = read_data(file_path['source'])
-    question_lil = read_data(file_path['target'])
-
-    # save list of words 
-    main_df = pd.DataFrame()
-    main_df['source_data'] = answer_lil
-    main_df['target_data'] = question_lil
+    source_lil = read_data(file_path['source'])
+    target_lil = read_data(file_path['target'])
 
     # build dictionary for source and target 
-    answer_vocab = Vocabulary(answer_lil, 45_000)
-    question_vocab = Vocabulary(question_lil, 28_000)
+    source_vocab = Vocabulary(source_lil, 45_000)
+    target_vocab = Vocabulary(target_lil, 28_000)
 
-    # convert words to idx for each dataset
-    main_df['source_indized'] = token2index_dataset(answer_lil, answer_vocab)
-    main_df['target_indized'] = token2index_dataset(question_lil, question_vocab)
-
-    return main_df, answer_vocab, question_vocab
+    return source_vocab, target_vocab
 
 # Data loader util functions 
 def pad_list_of_tensors(list_of_tensors, pad_token):
@@ -148,10 +155,15 @@ if __name__ == "main":
         'target': f"{main_data_path}/tgt-dev.txt"
     }
 
+    # build vocab with train data only 
+    vocab = {}
+    vocab['source'], vocab['target'] = build_train_vocab(train_file_path)
+
+    # build datasets for all train, test, dev
     dataset_dict = {
-        'train': QAPair(train_file_path),
-        'test': QAPair(test_file_path),
-        'dev': QAPair(dev_file_path),
+        'train': QAPair(train_file_path, vocab),
+        'test': QAPair(test_file_path, vocab),
+        'dev': QAPair(dev_file_path, vocab),
     }
 
     batch_size = 1024
