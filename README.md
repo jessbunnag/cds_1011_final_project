@@ -25,15 +25,15 @@
   - [x] source side V (input sentence) : keep 45k most frequent tokens from train 
   - [x] target side V (question) : keep 28k most frequent tokens from train 
   - [x] for both vocabs, replace unknown with <UNK>
-- [x] Define the model ENCODER (input = pairs of input sentence (list of tokens) and target (list of tokens))
+- [x] Define the model encoder
   - [x] Embedding : d=50, GloVE pre-trained embeddings (NOT learned) 
   - [x] Embedding : d=300, GloVE pre-trained embeddings (NOT learned) 
   - [x] Bi directional LSTM, hidden size = 600, num layer = 2
   - [x] Concat last hidden state of forward and backward pass --> encoder's output (for decoder) 
 - [x] Define the model decoder 
-  - [x] LSTM, hidden size = 600, num layer = 1
+  - [x] LSTM, hidden size = 600
   - [x] Add 2 layers for LSTM 
-  - [x] Add dropout
+  - [x] Add dropout 0.3
   - [x] Attention based encoding 
   - [ ] Implement beam search
   - [x] Figure out if we need attention mask
@@ -44,7 +44,6 @@
   - [x] Clip gradient at norm > 5
   - [x] Implement train step 
   - [x] Implement train loop  
-  - [ ] Implement beam search at decoding 
 - [ ] Inference 
   - [ ] Implement beam search at inference 
   - [ ] Implement evaluation metric 
