@@ -70,9 +70,8 @@ class AttnLSTMDecoder(nn.Module):
         # pretrained glove embeddings
         self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         
-        self.lstm_cell1 = nn.LSTMCell(self.hidden_size * 2 * 2, self.hidden_size, bias=True)
         self.lstm = nn.LSTM(
-            self.embed_size, hidden_size, num_layers=num_layers, batch_first=True
+            self.embed_size, hidden_size, num_layers=num_layers, batch_first=True, dropout=0.3
         )
 
         self.l1 = nn.Linear(hidden_size+enc_out_size, hidden_size, bias=False) # TODO: change l1 output size

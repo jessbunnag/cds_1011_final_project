@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from tqdm.notebook import tqdm
 
-from build_dataset import QAPair
+from build_dataset import build_train_vocab
 
 def load_glove(file_path):
     with open(file_path, 'r') as f:
@@ -39,15 +39,16 @@ def make_glove_embeddings(glove_dict, vocab, hidden_size):
 
     return torch.stack(embedding_li)
 
-glove_dict = load_glove('data/glove/glove.6B.50d.txt')
+emb_size = 300
+glove_dict = load_glove(f'data/glove/glove.42B.{emb_size}d.txt')
 
 train_file_path = {
     'source': f"data/processed/src-train.txt",
     'target': f"data/processed/tgt-train.txt"
 }
-train_dataset = QAPair(train_file_path)
-encoder_emb = make_glove_embeddings(glove_dict, train_dataset.answer_vocab, 50)
-decoder_emb = make_glove_embeddings(glove_dict, train_dataset.question_vocab, 50)
+vocab = build_train_vocab(train_file_path)
+encoder_emb = make_glove_embeddings(glove_dict, vocab['source'], emb_size)
+decoder_emb = make_glove_embeddings(glove_dict, vocab['target'], emb_size)
 
-torch.save(encoder_emb, 'embeddings/encoder_emb.pt')
-torch.save(decoder_emb, 'embeddings/decoder_emb.pt')
+torch.save(encoder_emb, f'embeddings/encoder_emb_{emb_size}.pt')
+torch.save(decoder_emb, f'embeddings/decoder_emb_{emb_size}.pt')
