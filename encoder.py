@@ -20,7 +20,8 @@ class BiLSTMEncoder(nn.Module):
         # pretrained glove embeddings
         self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
         self.lstm = nn.LSTM(
-            self.embed_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True
+            self.embed_size, hidden_size, num_layers=numlayers, batch_first=True, bidirectional=True,
+            dropout=0.3
         )
 
     def forward(self, input):
