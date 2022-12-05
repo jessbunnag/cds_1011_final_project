@@ -103,7 +103,10 @@ def build_train_vocab(file_path):
     source_vocab = Vocabulary(source_lil, 45_000)
     target_vocab = Vocabulary(target_lil, 28_000)
 
-    return source_vocab, target_vocab
+    return {
+        "source": source_vocab,
+        "target": target_vocab
+    }
 
 # Data loader util functions 
 def pad_list_of_tensors(list_of_tensors, pad_token):
@@ -156,8 +159,7 @@ if __name__ == "main":
     }
 
     # build vocab with train data only 
-    vocab = {}
-    vocab['source'], vocab['target'] = build_train_vocab(train_file_path)
+    vocab = build_train_vocab(train_file_path)
 
     # build datasets for all train, test, dev
     dataset_dict = {
