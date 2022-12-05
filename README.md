@@ -1,8 +1,9 @@
 # 1011 Final Project - Question Generation 
 
 ## How to run the model
-1. Run `python load_pretrained.py` to create parsed GloVe embeddings. Make sure you have dir `/embeddings` in your project dir
-2. Run cells in `train.ipynb` to run the train pipeline.
+1. Download glove.42B.300d.zip GloVe data from https://nlp.stanford.edu/projects/glove/ and put it in `data/glove/glove.42B.300d.txt`in your project dir
+2. Run `python load_pretrained.py` to create parsed GloVe embeddings. Make sure you have empty dir `/embeddings` in your 
+3. Run cells in `train.ipynb` to run the train pipeline.
 
 ## Resources 
 - Learning to Ask: Neural Question Generation for Reading Comprehension by Xinya Du, Junru Shao, Claire Cardie: http://arxiv.org/abs/1705.00106
@@ -35,18 +36,22 @@
   - [x] Add dropout
   - [x] Attention based encoding 
   - [ ] Implement beam search
-  - [ ] Figure out if we need attention mask
+  - [x] Figure out if we need attention mask
 - [x] Define Seq2seq model (like in hw2) 
-- [ ] Training 
-  - [ ] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
-  - [ ] Post-processing with the replacement of UNK
+- [x] Training 
+  - [x] Optimization: SGD, lr=1.0, halve lr at epoch 8, batch size = 64, Dropout = 0.3
   - [x] Learning rate update
-  - [ ] Clip gradient at norm > 5
+  - [x] Clip gradient at norm > 5
   - [x] Implement train step 
   - [x] Implement train loop  
+  - [ ] Implement beam search at decoding 
 - [ ] Inference 
   - [ ] Implement beam search at inference 
   - [ ] Implement evaluation metric 
+  - [ ] Post-processing with the replacement of UNK
+- [ ] Extensions 
+  - [ ] Transformer Encoder 
+  - [ ] Transformer Decoder 
   
 ## Notes 
 ### SQuAD Raw Data structure 
