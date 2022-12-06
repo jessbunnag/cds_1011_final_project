@@ -79,7 +79,7 @@ class AttnLSTMDecoder(nn.Module):
         
         self.encoder_attention_module = AttentionModule(self.hidden_size)
         
-    def forward(self, answer, input, encoder_outs, hidden_init, targets_len):
+    def forward(self, input, encoder_outs, hidden_init, targets_len):
         # print(f'===DECODER FORWARD===')
         # print(f'input shape {input.shape}') 
         embedded = self.embedding(input)
