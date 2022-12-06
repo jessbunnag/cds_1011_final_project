@@ -1,14 +1,20 @@
 import torch.nn as nn
 import torch
 
-from encoder import BiLSTMEncoder
+from encoder import BiLSTMEncoder, EncoderTransformer
 from decoder import AttnLSTMDecoder
 
 class Seq2Seq(nn.Module):
-    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers=2):
+    '''
+    I THINK WE NEED src_max_len INITIALIZED HERE
+    '''
+    def __init__(self, pretrained_vectors, src_max_len, hidden_size, output_size, num_layers=2, transformer_encoder=False, transformer_decoder=False):
         super(Seq2Seq, self).__init__()
 
-        self.enc = BiLSTMEncoder(pretrained_vectors['enc'], hidden_size, num_layers)
+        if transformer_encoder:
+            self.enc = EncoderTransformer(pretrained_vectors['enc'], src_max_len, numlayers=num_layers)
+        else:
+            self.enc = BiLSTMEncoder(pretrained_vectors['enc'], hidden_size, num_layers)
         self.dec = AttnLSTMDecoder(pretrained_vectors['dec'], hidden_size, 2*hidden_size, output_size, num_layers)
 
     def forward(self, answer, question, src_lens, tgt_lens):    
