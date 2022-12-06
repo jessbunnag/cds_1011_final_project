@@ -55,8 +55,10 @@ class QAPair(Dataset):
         return len(self.main_df)
 
     def __getitem__(self, idx):
-        return (self.main_df.iloc[idx]['source_indized'], 
+        return (self.main_df.iloc[idx]['source_data'],
+                self.main_df.iloc[idx]['source_indized'], 
                 len(self.main_df.iloc[idx]['source_indized']),
+                self.main_df.iloc[idx]['target_data'],
                 self.main_df.iloc[idx]['target_indized'],
                 len(self.main_df.iloc[idx]['target_indized'])
                 )
@@ -122,20 +124,24 @@ def pad_list_of_tensors(list_of_tensors, pad_token):
     return padded_tensor
 
 def pad_collate_fn(batch, pad_token):
-    input_list = [torch.tensor(s[0]) for s in batch]
-    input_len_list = [s[1] for s in batch]
+    input_data = [s[0] for s in batch]
+    input_list = [torch.tensor(s[1]) for s in batch]
+    input_len_list = [s[2] for s in batch]
 
-    target_list = [torch.tensor(s[2]) for s in batch]
-    target_len_list = [s[3] for s in batch]
+    target_data = [s[3] for s in batch]
+    target_list = [torch.tensor(s[4]) for s in batch]
+    target_len_list = [s[5] for s in batch]
 
         
     input_tensor = pad_list_of_tensors(input_list, pad_token)
     target_tensor = pad_list_of_tensors(target_list, pad_token)
 
-    named_returntuple = namedtuple('namedtuple', ['input_vecs', 'input_lens', 'target_vecs', 'target_lens'])
+    named_returntuple = namedtuple('namedtuple', ['source_data', 'source_vecs', 'source_lens', 'target_data', 'target_vecs', 'target_lens'])
     
-    return named_returntuple(input_tensor, 
+    return named_returntuple(input_data,
+                            input_tensor, 
                             torch.LongTensor(input_len_list),
+                            target_data,
                             target_tensor,
                             torch.LongTensor(target_len_list)
                             ) 
