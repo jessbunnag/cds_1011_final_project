@@ -97,7 +97,7 @@ class AttnLSTMDecoder(nn.Module):
 
         log_probs = []
 
-        best_attn_labels = []
+        attn_scores_list = []
         # for each time step (of target) : this should be the target length of the batched targets 
         for t in range(T):
             # compute attention and c_t 
@@ -119,30 +119,18 @@ class AttnLSTMDecoder(nn.Module):
             # print(f'log_prob shape {log_prob.shape}')
             # print(f'log_prob {log_prob}')
 
-            # FOR UNK POSTPROCESSING
-            # first, get the src token index with the max attention for this time step
-            src_token_idxs_t = torch.argmax(attn_scores, dim=1)
-            # print(f'src_token_idxs_t shape {src_token_idxs_t.shape}')
-
-            # convert the index location in the src to the vocab class label for src
-            src_labels_t = []
-            for sen_idx in range(len(src_token_idxs_t)):
-                class_label = answer[sen_idx][src_token_idxs_t[sen_idx]]
-                src_labels_t.append(class_label)
-            src_labels_t = torch.Tensor(src_labels_t).view(-1, 1)
-            # print(f'src_labels_t shape {src_labels_t.shape}')
+            attn_scores_list.append(attn_scores)
 
             log_probs.append(log_prob)
-            best_attn_labels.append(src_labels_t)
 
             # TODO: do beam search at each time step 
             # k = 3, take top k values (and indices) from the log_prob list 
 
         log_probs_tensor = torch.stack(log_probs, dim=1)
         # print(f'log_probs_tensor {log_probs_tensor.shape}')
-        best_attn_labels = torch.squeeze(torch.stack(best_attn_labels, dim=1))
-        # print(f'best_attn_labels {best_attn_labels.shape}')
+
+        attn_scores_mat = torch.stack(attn_scores_list, dim=2)
 
         # TODO: return other variables 
-        return log_probs_tensor, h_out, best_attn_labels
+        return log_probs_tensor, h_out, attn_scores_mat
         # return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec

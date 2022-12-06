@@ -21,6 +21,6 @@ class Seq2Seq(nn.Module):
         ], dim=0) # "s" in the paper
         # print(f'enc_out_repr {enc_out_repr.shape}')
         
-        dec_log_probs, dec_hidden, best_attn_labels = self.dec(answer=answer, input=question, encoder_outs=enc_output, hidden_init=enc_out_repr, targets_len=src_lens)
+        dec_log_probs, dec_hidden, attn_scores_mat = self.dec(answer=answer, input=question, encoder_outs=enc_output, hidden_init=enc_out_repr, targets_len=src_lens)
         
-        return dec_log_probs, dec_hidden, best_attn_labels
+        return dec_log_probs, dec_hidden, attn_scores_mat
