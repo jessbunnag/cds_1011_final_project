@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as F 
 
 class AttentionModule(nn.Module):
 
@@ -97,6 +97,7 @@ class AttnLSTMDecoder(nn.Module):
 
         log_probs = []
 
+        attn_scores_list = []
         # for each time step (of target) : this should be the target length of the batched targets 
         for t in range(T):
             # compute attention and c_t 
@@ -118,6 +119,8 @@ class AttnLSTMDecoder(nn.Module):
             # print(f'log_prob shape {log_prob.shape}')
             # print(f'log_prob {log_prob}')
 
+            attn_scores_list.append(attn_scores)
+
             log_probs.append(log_prob)
 
             # TODO: do beam search at each time step 
@@ -126,6 +129,8 @@ class AttnLSTMDecoder(nn.Module):
         log_probs_tensor = torch.stack(log_probs, dim=1)
         # print(f'log_probs_tensor {log_probs_tensor.shape}')
 
+        attn_scores_mat = torch.stack(attn_scores_list, dim=2)
+
         # TODO: return other variables 
-        return log_probs_tensor, h_out
+        return log_probs_tensor, h_out, attn_scores_mat
         # return return_scores.transpose(0, 1).contiguous(), memory.transpose(0,1), attn_wts_list, context_vec
