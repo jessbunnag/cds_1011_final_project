@@ -15,6 +15,9 @@ def unk_postprocessing(src, attn_scores_mat):
     Returns:
         best_attn_labels: 2D pytorch tensor of size (batch_size x max TGT sen len per batch)
     '''
+    # first, find the SRC special tokens and put an attention of zero for those attention scores
+    # (so that they are never chosen for postprocessing replacement of <UNK>)
+
     # get the src token index with the max attention for this time step
     src_token_idx = torch.argmax(attn_scores_mat, dim=1)
     # print('src_token_idx SIZE', src_token_idx.size())
