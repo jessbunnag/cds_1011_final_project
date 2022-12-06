@@ -79,4 +79,21 @@ def beam_search(model, encoder_states, vocab, beam_width=3):
             dec_log_probs, dec_hidden, attn_scores_mat = model.dec(input=dec_input, encoder_outs=enc_output, hidden_init=dec_hidden)
 
         break
+
+
+def beam_search_batch(batch, model, vocab, device, beam_width=3):
+    input = batch.source_vecs.to(device) 
+    inputs_len = batch.source_lens.to(device)
+    target = batch.target_vecs.to(device)
+    target_len = batch.target_lens.to(device) 
     
+    model.eval()
+
+    # model encoder forward
+    model.enc()
+
+    dec_log_probs, dec_hidden, attn_scores_mat = model(input, target, inputs_len, target_len)
+
+
+    # return the attention scores at the last time step
+    return dec_log_probs, attn_scores_mat  
