@@ -5,6 +5,9 @@ from nltk.translate import meteor_score
 from torchmetrics import BLEUScore
 import numpy as np
 
+PAD_ID = 0
+BOS_ID = 1
+EOS_ID = 2
 
 def unk_postprocessing(src, attn_scores_mat):
     '''
@@ -15,9 +18,19 @@ def unk_postprocessing(src, attn_scores_mat):
     Returns:
         best_attn_labels: 2D pytorch tensor of size (batch_size x max TGT sen len per batch)
     '''
+    # first, find the SRC special tokens and put an attention of zero for those attention scores
+    # (so that they are never chosen for postprocessing replacement of <UNK>)
+    new_attn_scores_mat = torch.zeros(attn_scores_mat.size())
+    for sen_idx in range(attn_scores_mat.size(0)):
+        for src_idx in range(attn_scores_mat.size(1)):
+            attn_tensor = attn_scores_mat[sen_idx, src_idx, :]
+            src_id = src[sen_idx][src_idx]
+            if (src_id == PAD_ID) or (src_id == BOS_ID) or (src_id == EOS_ID):
+                attn_tensor = torch.zeros(attn_tensor.size())
+            new_attn_scores_mat[sen_idx, src_idx, :] = attn_tensor
+
     # get the src token index with the max attention for this time step
-    src_token_idx = torch.argmax(attn_scores_mat, dim=1)
-    # print('src_token_idx SIZE', src_token_idx.size())
+    src_token_idx = torch.argmax(new_attn_scores_mat, dim=1)
 
     # convert the index location in the src to the vocab class label for src
     best_attn_labels = torch.zeros(src_token_idx.size())
