@@ -1,13 +1,14 @@
 
 import torch
-from torchtext.data.metrics import bleu_score
-from nltk.translate import meteor_score
+# from torchtext.data.metrics import bleu_score
 from torchmetrics import BLEUScore
+from nltk.translate.meteor_score import meteor_score
+from nltk.translate.bleu_score import modified_precision
+from nltk.translate.bleu_score import sentence_bleu
+from torchmetrics.text.rouge import ROUGEScore
+# from ignite.metrics import RougeL
 import numpy as np
 
-PAD_ID = 0
-BOS_ID = 1
-EOS_ID = 2
 
 def unk_postprocessing(src, attn_scores_mat):
     '''
@@ -18,19 +19,9 @@ def unk_postprocessing(src, attn_scores_mat):
     Returns:
         best_attn_labels: 2D pytorch tensor of size (batch_size x max TGT sen len per batch)
     '''
-    # first, find the SRC special tokens and put an attention of zero for those attention scores
-    # (so that they are never chosen for postprocessing replacement of <UNK>)
-    new_attn_scores_mat = torch.zeros(attn_scores_mat.size())
-    for sen_idx in range(attn_scores_mat.size(0)):
-        for src_idx in range(attn_scores_mat.size(1)):
-            attn_tensor = attn_scores_mat[sen_idx, src_idx, :]
-            src_id = src[sen_idx][src_idx]
-            if (src_id == PAD_ID) or (src_id == BOS_ID) or (src_id == EOS_ID):
-                attn_tensor = torch.zeros(attn_tensor.size())
-            new_attn_scores_mat[sen_idx, src_idx, :] = attn_tensor
-
     # get the src token index with the max attention for this time step
-    src_token_idx = torch.argmax(new_attn_scores_mat, dim=1)
+    src_token_idx = torch.argmax(attn_scores_mat, dim=1)
+    # print('src_token_idx SIZE', src_token_idx.size())
 
     # convert the index location in the src to the vocab class label for src
     best_attn_labels = torch.zeros(src_token_idx.size())
@@ -88,27 +79,47 @@ def eval_metrics(preds_list, labels_list):
         X
     '''
     # compute the BLEU score across all sentences for n in [1, 4]
+    ### from nltk.translate.bleu_score import modified_precision:
     all_bleu_1 = []
     all_bleu_2 = []
     all_bleu_3 = []
     all_bleu_4 = []
 
-    metric1 = BLEUScore(n_gram=1)
-    metric2 = BLEUScore(n_gram=2)
-    metric3 = BLEUScore(n_gram=3)
-    metric4 = BLEUScore(n_gram=4)
     for idx in range(len(labels_list)):
-        all_bleu_1.append(metric1(preds_list[idx], labels_list[idx]).item())
-        all_bleu_2.append(metric2(preds_list[idx], labels_list[idx]).item())
-        all_bleu_3.append(metric3(preds_list[idx], labels_list[idx]).item())
-        all_bleu_4.append(metric4(preds_list[idx], labels_list[idx]).item())
+        all_bleu_1.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+1)))
+        all_bleu_2.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+2)))
+        all_bleu_3.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+3)))
+        all_bleu_4.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+4)))
 
+    # compute the meteor score:
+    all_meteor = []
+
+    for idx in range(len(labels_list)):
+        all_meteor.append(meteor_score(labels_list[idx], preds_list[idx]))
+
+    # compute ROUGE-L:
+
+
+    ### from torchmetrics import BLEUScore:
+    # all_bleu_1 = []
+    # all_bleu_2 = []
+    # all_bleu_3 = []
+    # all_bleu_4 = []
+    # metric1 = BLEUScore(n_gram=1)
+    # metric2 = BLEUScore(n_gram=2)
+    # metric3 = BLEUScore(n_gram=3)
+    # metric4 = BLEUScore(n_gram=4)
+    # for idx in range(len(labels_list)):
+    #     all_bleu_1.append(metric1(preds_list[idx], labels_list[idx]).item())
+    #     all_bleu_2.append(metric2(preds_list[idx], labels_list[idx]).item())
+    #     all_bleu_3.append(metric3(preds_list[idx], labels_list[idx]).item())
+    #     all_bleu_4.append(metric4(preds_list[idx], labels_list[idx]).item())
+
+    ### from torchtext.data.metrics import bleu_score:
     # bleu_1 = bleu_score(preds_list, labels_list, max_n=1, weights=[1])
     # bleu_2 = bleu_score(preds_list, labels_list, max_n=2, weights=[0.5, 0.5])
     # bleu_3 = bleu_score(preds_list, labels_list, max_n=3, weights=[0.3333, 0.3333, 0.3334])
     # bleu_4 = bleu_score(preds_list, labels_list, max_n=4, weights=[0.25, 0.25, 0.25, 0.25])
 
-    # compute the meteor score
-    meteor = 0
 
-    return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4)
+    return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4), np.mean(all_meteor)
