@@ -106,6 +106,6 @@ def eval_metrics(preds_list, labels_list):
     all_rougeL = []
     rouge = ROUGEScore(rouge_keys='rougeL')
     for idx in range(len(labels_list)):
-        all_rougeL.append(rouge(' '.join(preds_list[idx]), ' '.join(labels_list[idx])).get('rougeL_recall').item())
+        all_rougeL.append(rouge(' '.join(preds_list[idx]), ' '.join(labels_list[idx])).get('rougeL_recall'))
 
     return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4), np.mean(all_meteor), np.mean(all_rougeL)
