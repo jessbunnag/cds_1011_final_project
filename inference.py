@@ -89,11 +89,12 @@ def eval_metrics(preds_list, labels_list):
     bleu_3 = bleu_score(preds_list, labels_list, max_n=3, weights=weights3)
     bleu_4 = bleu_score(preds_list, labels_list, max_n=4, weights=weights4)
 
-    # # compute the meteor score:
-    # all_meteor = []
+    # compute the METEOR score:
+    all_meteor = []
 
-    # for idx in range(len(labels_list)):
-    #     all_meteor.append(meteor_score(labels_list[idx], preds_list[idx]))
+    for idx in range(len(labels_list)):
+        all_meteor.append(meteor_score(labels_list[idx], preds_list[idx]))
+
 
     # compute ROUGE-L:
 
@@ -113,4 +114,4 @@ def eval_metrics(preds_list, labels_list):
     #     all_bleu_3.append(metric3(preds_list[idx], labels_list[idx]).item())
     #     all_bleu_4.append(metric4(preds_list[idx], labels_list[idx]).item())
 
-    return bleu_1, bleu_2, bleu_3, bleu_4
+    return bleu_1, bleu_2, bleu_3, bleu_4, np.mean(all_meteor)
