@@ -44,8 +44,6 @@ class BiLSTMEncoder(nn.Module):
 class PositionalEncoding(nn.Module):
     '''
     Based off of https://pytorch.org/tutorials/beginner/transformer_tutorial.html
-
-    FROM MY UNDERSTANDING WE NEED AN INPUT CALLED src_max_len THAT REPRESENTS THE MAX LENGTH OF SRC
     '''
     def __init__(self, emb_size, dropout, src_max_len):
         super().__init__()
@@ -63,13 +61,12 @@ class PositionalEncoding(nn.Module):
         Returns:
             3D tensor of size max SRC sentence length x batch size x SRC embedding dimension (300)
         '''
-        print('POSITIONAL ENCODING SIZE IN', x.size())
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
 class EncoderTransformer(nn.Module):
     '''
-    FROM MY UNDERSTANDING WE NEED AN INPUT CALLED src_max_len THAT REPRESENTS THE MAX LENGTH OF SRC
+    Encoder using transformer architecture
     '''
     def __init__(self, pretrained_vectors, src_max_len, nhead=1, numlayers=2, dropout=0.3):
         super().__init__()
@@ -85,5 +82,5 @@ class EncoderTransformer(nn.Module):
         x = self.embedding(x) * math.sqrt(self.embed_size)
         x = self.position_embed(x)
         x = self.transformer(x)
-        hidden = torch.mean(x, dim=1).unsqueeze(0)
+        hidden = torch.mean(x, dim=1).unsqueeze(0) # not currently using this - initializing decoder with zeros
         return x, hidden

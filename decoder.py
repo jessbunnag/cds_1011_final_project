@@ -4,9 +4,14 @@ import torch.nn.functional as F
 
 class AttentionModule(nn.Module):
 
-    def __init__(self, hidden_dim):
+    def __init__(self, emb_size, hidden_dim, transformer_encoder, transformer_seq2seq):
         super(AttentionModule, self).__init__()
         self.l1 = nn.Linear(hidden_dim*2, hidden_dim, bias=False)
+        if (transformer_encoder == False) and (transformer_seq2seq == False):
+            self.l1 = nn.Linear(hidden_dim*2, hidden_dim, bias=False)
+        # for a transformer encoder, the encoder output is the emb_size
+        elif (transformer_encoder == True) and (transformer_seq2seq == False):
+            self.l1 = nn.Linear(emb_size, hidden_dim, bias=False)
 
     def forward(self, hidden, encoder_outs):
         """
@@ -54,7 +59,7 @@ class AttentionModule(nn.Module):
 
 
 class AttnLSTMDecoder(nn.Module):
-    def __init__(self, pretrained_vectors, hidden_size, enc_out_size, out_vocab_size, num_layers):
+    def __init__(self, pretrained_vectors, hidden_size, enc_out_size, out_vocab_size, num_layers, transformer_encoder, transformer_seq2seq):
         super(AttnLSTMDecoder, self).__init__()
 
         self.embed_size = pretrained_vectors.shape[1]
@@ -68,10 +73,14 @@ class AttnLSTMDecoder(nn.Module):
             self.embed_size, hidden_size, num_layers=num_layers, batch_first=True, dropout=0.3
         )
 
-        self.l1 = nn.Linear(hidden_size+enc_out_size, hidden_size, bias=False) # TODO: change l1 output size
+        # for a transformer encoder, use embed_size instead of the enc_out_size used for the LSTM encoder
+        if transformer_encoder:
+            self.l1 = nn.Linear(hidden_size+self.embed_size, hidden_size, bias=False) # TODO: change l1 output size
+        else:
+            self.l1 = nn.Linear(hidden_size+enc_out_size, hidden_size, bias=False)
         self.l2 = nn.Linear(hidden_size, out_vocab_size, bias=False)
         
-        self.encoder_attention_module = AttentionModule(self.hidden_size)
+        self.encoder_attention_module = AttentionModule(self.embed_size, self.hidden_size, transformer_encoder, transformer_seq2seq)
         
     def forward(self, input, encoder_outs, hidden_init):
         # print(f'===DECODER FORWARD===')
