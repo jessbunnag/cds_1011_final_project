@@ -89,15 +89,15 @@ class Beam(object):
             if node.prefix[-1] == self.eos_id: # path is complete 
                 print(f'path is complete ')
                 print(f'{node.prefix}')
-                self.complete_paths.append(node.prefix)
+                self.complete_paths.append(node)
                 self.beam_width -= 1
             else:
                 self.frontier.append(node)
 
-        print(f'after updating frontier')
-        for node in self.frontier:
-            print(node)
-            print(f'prefix {self.vocab.decode_idx2token(node.prefix) }')
+        # print(f'after updating frontier')
+        # for node in self.frontier:
+        #     print(node)
+        #     print(f'prefix {self.vocab.decode_idx2token(node.prefix) }')
         # reset candidates for next search
         self.candidates = []
 
@@ -107,6 +107,9 @@ class Beam(object):
     def get_complete_paths(self):
         return self.complete_paths
 
+    def get_best_k_paths(self, k):
+        complete_paths = sorted(self.complete_paths, reverse=True)[:k]
+        return [self.vocab.decode_idx2token(node.prefix) for node in complete_paths]
 
 
 def beam_search(model, encoder_states, vocab, device, beam_width):
@@ -141,6 +144,8 @@ def beam_search(model, encoder_states, vocab, device, beam_width):
         beam.update_frontier()
 
     print(f'complete paths {beam.get_complete_paths()}' )
+    best_paths = beam.get_best_k_paths(1)
+    return best_paths[0]
             
 
 def beam_search_batch(batch, model, vocab, device, beam_width=3):
