@@ -28,24 +28,6 @@ class AttentionModule(nn.Module):
         # print(f'context shape {context.shape}')
         return context.squeeze(), attn_scores.squeeze()
 
-        # OLD IMPLEMENTATION 
-        # x = self.l1(hidden)
-        # print(f'x unsqueeze {x.unsqueeze(-1).shape}')
-        # att_score = torch.bmm(encoder_outs, x.unsqueeze(-1)); #this is bsz x seq x 1
-        # att_score = att_score.squeeze(-1); #this is bsz x seq
-        # att_score = att_score.transpose(0, 1)
-        
-        # seq_mask = self.sequence_mask(src_lens, 
-        #                             max_len=max(src_lens).item(), 
-        #                             device = hidden.device).transpose(0, 1)
-
-
-        # masked_att = seq_mask * att_score
-        # masked_att[masked_att == 0] = -1e10
-        # attn_scores = F.softmax(masked_att, dim=0)
-        # x = (attn_scores.unsqueeze(2) * encoder_outs.transpose(0, 1)).sum(dim=0)
-        # x = torch.tanh(self.l2(torch.cat((x, hidden), dim=1)))
-        # return x, attn_scores
 
     def sequence_mask(self, sequence_length, max_len=None, device = torch.device('cuda')):
         if max_len is None:
