@@ -52,7 +52,10 @@ class Beam(object):
             candidates: tensor shape [1, vocab_size]
         """
         # print(f'add candidates fn')
+        print(f'argmax {candidates_logprob.argmax(dim=1)}')
         for i in range(len(self.vocab)):
+            if i == self.bos_id:
+                continue
             word_logprob = candidates_logprob[0, i].item()
 
             new_state = BeamNode(
@@ -70,7 +73,8 @@ class Beam(object):
                     hq.heappop(self.candidates) # remove the worst in the candidates 
                     hq.heappush(self.candidates, new_state)
 
-        # print(f'len candidates {len(self.candidates)}')
+        print(f'len candidates {len(self.candidates)}')
+        print(f'best in candidate {self.candidates[0].prefix[-1]}')
         # print(f'candidates {self.candidates}')
 
     def update_frontier(self):
@@ -80,12 +84,17 @@ class Beam(object):
         self.frontier = []
         for node in self.candidates:
             if node.prefix[-1] == self.eos_id: # path is complete 
-                print(f'')
+                print(f'path is complete ')
+                print(f'{node.prefix}')
                 self.complete_paths.append(node.prefix)
                 self.beam_width -= 1
             else:
                 self.frontier.append(node)
 
+        print(f'after updating frontier')
+        for node in self.frontier:
+            print(node)
+            print(f'prefix {self.vocab.decode_idx2token(node.prefix) }')
         # reset candidates for next search
         self.candidates = []
 
@@ -153,6 +162,7 @@ def beam_search_batch(batch, model, vocab, device, beam_width=3):
     batch_size = enc_output.shape[0]
 
     for i in range(batch_size):
+        print(f'target question: {batch.target_data[i]}')
         encoder_state = (enc_output[i].unsqueeze(0), enc_out_repr[:, i, :].unsqueeze(1))
         # print(f'enc_output i {encoder_state[0].shape}') # [1, seq_len, hidden_dim*2]
         # print(f'enc_out_repr i {encoder_state[1].shape}') 
