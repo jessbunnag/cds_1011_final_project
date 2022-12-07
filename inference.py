@@ -3,10 +3,13 @@ from torchtext.data.metrics import bleu_score
 # from torchmetrics import BLEUScore
 # from nltk.translate.bleu_score import modified_precision
 # from nltk.translate.bleu_score import sentence_bleu
-# from nltk.translate.meteor_score import meteor_score
+import numpy as np
+from nltk.translate.meteor_score import meteor_score
+import nltk
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 from torchmetrics.text.rouge import ROUGEScore
 # from ignite.metrics import RougeL
-import numpy as np
 
 
 def unk_postprocessing(src, attn_scores_mat):
@@ -77,41 +80,32 @@ def eval_metrics(preds_list, labels_list):
     Returns:
         X
     '''
-    
-    # compute BLEU score:
+    # compute the BLEU score across all sentences for n in [1, 4]
+    all_bleu_1 = []
+    all_bleu_2 = []
+    all_bleu_3 = []
+    all_bleu_4 = []
+
     weights1 = [1.0/1.0]
     weights2 = [1.0/2.0, 1.0/2.0]
     weights3 = [1.0/3.0, 1.0/3.0, 1.0/3.0]
     weights4 = [1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0]
 
-    bleu_1 = bleu_score(preds_list, labels_list, max_n=1, weights=weights1)
-    bleu_2 = bleu_score(preds_list, labels_list, max_n=2, weights=weights2)
-    bleu_3 = bleu_score(preds_list, labels_list, max_n=3, weights=weights3)
-    bleu_4 = bleu_score(preds_list, labels_list, max_n=4, weights=weights4)
+    for idx in range(len(labels_list)):
+        all_bleu_1.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=1, weights=weights1))
+        all_bleu_2.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=2, weights=weights2))
+        all_bleu_3.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=3, weights=weights3))
+        all_bleu_4.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=4, weights=weights4))
 
     # compute the METEOR score:
     all_meteor = []
-
     for idx in range(len(labels_list)):
-        all_meteor.append(meteor_score(labels_list[idx], preds_list[idx]))
-
+        all_meteor.append(meteor_score([labels_list[idx]], preds_list[idx]))
 
     # compute ROUGE-L:
+    all_rougeL = []
+    rouge = ROUGEScore(rouge_keys='rougeL')
+    for idx in range(len(labels_list)):
+        all_rougeL.append(rouge(' '.join(preds_list[idx]), ' '.join(labels_list[idx])).get('rougeL_recall').item())
 
-
-    ### from torchmetrics import BLEUScore:
-    # all_bleu_1 = []
-    # all_bleu_2 = []
-    # all_bleu_3 = []
-    # all_bleu_4 = []
-    # metric1 = BLEUScore(n_gram=1)
-    # metric2 = BLEUScore(n_gram=2)
-    # metric3 = BLEUScore(n_gram=3)
-    # metric4 = BLEUScore(n_gram=4)
-    # for idx in range(len(labels_list)):
-    #     all_bleu_1.append(metric1(preds_list[idx], labels_list[idx]).item())
-    #     all_bleu_2.append(metric2(preds_list[idx], labels_list[idx]).item())
-    #     all_bleu_3.append(metric3(preds_list[idx], labels_list[idx]).item())
-    #     all_bleu_4.append(metric4(preds_list[idx], labels_list[idx]).item())
-
-    return bleu_1, bleu_2, bleu_3, bleu_4, np.mean(all_meteor)
+    return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4), np.mean(all_meteor), np.mean(all_rougeL)
