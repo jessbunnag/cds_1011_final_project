@@ -13,7 +13,7 @@ class BeamNode(object):
     def __repr__(self) -> str:
         s = (
             f"Prefix {self.prefix}\nSum log prob {-self.neg_log_prob}\n" +
-            f"Decoder output {self.dec_output}\nDecoder hidden{self.dec_hidden}"
+            f"Decoder output {self.dec_output}\nDecoder hidden {self.dec_hidden}"
         )
         return s
         
@@ -22,11 +22,12 @@ class BeamNode(object):
 
 
 class Beam(object):
-    def __init__(self, beam_width, vocab, init_hidden) -> None:
+    def __init__(self, beam_width, vocab, init_hidden, device):
         self.beam_width = beam_width
         self.vocab = vocab 
         self.bos_id = vocab.get_id('<bos>')
         self.eos_id = vocab.get_id('<eos>')
+        self.device = device
         self.frontier = []
         self.candidates = []
 
@@ -34,8 +35,8 @@ class Beam(object):
 
     def init_frontier(self, init_hidden):
         start_prefix = [self.vocab.get_id('<bos>')]
-        start_tensor = torch.tensor(start_prefix)
-        start_state = Beam(
+        start_tensor = torch.tensor(start_prefix).unsqueeze(0).to(self.device) # batch size of 1
+        start_state = BeamNode(
             neg_log_prob=0, 
             prefix=start_prefix, 
             dec_output=start_tensor, 
@@ -57,7 +58,7 @@ class Beam(object):
     
 
 
-def beam_search(model, encoder_states, vocab, beam_width=3):
+def beam_search(model, encoder_states, vocab, device, beam_width):
     """
     Parameters:
         model: trained seq2seq model 
@@ -69,14 +70,18 @@ def beam_search(model, encoder_states, vocab, beam_width=3):
     """
     enc_output, init_hidden = encoder_states
 
-    beam = Beam(beam_width, vocab, init_hidden)
+    beam = Beam(beam_width, vocab, init_hidden, device)
 
     while True: #TODO : add condition if frontier contains incomplete paths 
         for state in beam.frontier:
             print(state)
             dec_input = state.dec_output
-            dec_hidden = state.dec_hidden
-            dec_log_probs, dec_hidden, attn_scores_mat = model.dec(input=dec_input, encoder_outs=enc_output, hidden_init=dec_hidden)
+            dec_hidden = state.dec_hidden.contiguous()
+            print(f'dec_input shape {dec_input.shape}')
+            print(f'dec_hidden shape {dec_hidden.shape}')
+            dec_log_probs, dec_hidden, attn_scores_mat = model.dec(
+                input=dec_input, encoder_outs=enc_output, hidden_init=dec_hidden
+            )
 
         break
 
@@ -90,10 +95,28 @@ def beam_search_batch(batch, model, vocab, device, beam_width=3):
     model.eval()
 
     # model encoder forward
-    model.enc()
+    enc_output, enc_hidden = model.enc(input)
+        # calculate sentence encoder's output for init decoder hidden
+        # concat last hidden state of forward and backward pass 
+    enc_out_repr = torch.cat([
+        enc_hidden[-2, :, :].unsqueeze(0),  # last layer of forward pass 
+        enc_hidden[-1, :, :].unsqueeze(0)   # last layer of backward pass
+    ], dim=0) # "s" in the paper
 
-    dec_log_probs, dec_hidden, attn_scores_mat = model(input, target, inputs_len, target_len)
+    encoder_states = (enc_output, enc_out_repr)
+
+    print(f'enc_output {enc_output.shape}') # [batch_size, seq_len, hidden_dim*2]
+    print(f'enc_out_repr {enc_out_repr.shape}') # [2, batch_size, hidden_dim]
+
+    batch_size = enc_output.shape[0]
+
+    for i in range(batch_size):
+        encoder_state = (enc_output[i].unsqueeze(0), enc_out_repr[:, i, :].unsqueeze(1))
+        print(f'enc_output i {encoder_state[0].shape}') # [1, seq_len, hidden_dim*2]
+        print(f'enc_out_repr i {encoder_state[1].shape}') 
+
+        beam_search(model, encoder_state, vocab, device, beam_width)
+        break
 
 
-    # return the attention scores at the last time step
-    return dec_log_probs, attn_scores_mat  
+    return 

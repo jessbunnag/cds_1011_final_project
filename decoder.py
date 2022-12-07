@@ -19,25 +19,27 @@ class AttentionModule(nn.Module):
         # print(f"encoder_outs shape {encoder_outs.shape}")
 
         # transform encoder outputs to correct dimension
-        att_score = self.l1(encoder_outs) #[128, 600, L]
+        att_score = self.l1(encoder_outs) #[N, 600, L]
 
         # print(f"l1(encoder_outs) transpose shape {att_score.transpose(1,2).shape}")
 
         # calculate each token's h_T W b_i
-        att_score = torch.bmm(hidden, att_score.transpose(1,2)) #[128, 1, L]
+        att_score = torch.bmm(hidden, att_score.transpose(1,2)) #[N, 1, L]
 
         # print(f"att_score shape {att_score.shape}")
 
         # calcualte each token's attention score a_i
-        attn_scores = F.softmax(att_score.squeeze(), dim=1).unsqueeze(2)
+        # [N, 1, L] --> squeeze [N, L]
+        attn_scores = F.softmax(att_score.squeeze(1), dim=1).unsqueeze(2) # [N, L, 1]
 
         # print(f"att_score after softmax shape {attn_scores.shape}")
         # print(f"encoder_outs transpose shape {encoder_outs.transpose(1, 2).shape}")
 
         # calculate context vector from attention scores
-        context = torch.bmm(encoder_outs.transpose(1, 2), attn_scores)
+        # [N, 1200, L] x [N, L, 1]
+        context = torch.bmm(encoder_outs.transpose(1, 2), attn_scores) # [N, 1200, 1]
         # print(f'context shape {context.shape}')
-        return context.squeeze(), attn_scores.squeeze()
+        return context.squeeze(2), attn_scores.squeeze(2)
 
     def sequence_mask(self, sequence_length, max_len=None, device = torch.device('cuda')):
         if max_len is None:
