@@ -60,7 +60,7 @@ class AttentionModule(nn.Module):
 
 
 class AttnLSTMDecoder(nn.Module):
-    def __init__(self, pretrained_vectors, hidden_size, enc_out_size, out_vocab_size, num_layers):
+    def __init__(self, pretrained_vectors, hidden_size, enc_out_size, out_vocab_size, num_layers, freeze=True):
         super(AttnLSTMDecoder, self).__init__()
 
         self.embed_size = pretrained_vectors.shape[1]
@@ -68,7 +68,7 @@ class AttnLSTMDecoder(nn.Module):
         self.output_size = out_vocab_size
 
         # pretrained glove embeddings
-        self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=True)
+        self.embedding = nn.Embedding.from_pretrained(pretrained_vectors, freeze=freeze)
         
         self.lstm = nn.LSTM(
             self.embed_size, hidden_size, num_layers=num_layers, batch_first=True, dropout=0.3

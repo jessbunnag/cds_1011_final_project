@@ -5,11 +5,11 @@ from encoder import BiLSTMEncoder
 from decoder import AttnLSTMDecoder
 
 class Seq2Seq(nn.Module):
-    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers=2):
+    def __init__(self, pretrained_vectors, hidden_size, output_size, num_layers=2, freeze=True):
         super(Seq2Seq, self).__init__()
 
-        self.enc = BiLSTMEncoder(pretrained_vectors['enc'], hidden_size, num_layers)
-        self.dec = AttnLSTMDecoder(pretrained_vectors['dec'], hidden_size, 2*hidden_size, output_size, num_layers)
+        self.enc = BiLSTMEncoder(pretrained_vectors['enc'], hidden_size, num_layers, freeze=freeze)
+        self.dec = AttnLSTMDecoder(pretrained_vectors['dec'], hidden_size, 2*hidden_size, output_size, num_layers, freeze=freeze)
 
     def forward(self, answer, question, src_lens, tgt_lens):    
         enc_output, enc_hidden = self.enc(answer)
