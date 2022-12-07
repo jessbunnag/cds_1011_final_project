@@ -65,22 +65,25 @@ class Beam(object):
                 dec_hidden=dec_hidden
             )
 
-            # add state to candidate while mantaining heap variants
-            if len(self.candidates) < self.beam_width:
-                hq.heappush(self.candidates, new_state)
-            else:
-                if new_state > self.candidates[0]: # candidates is min heap so the top is always the lowest prob
-                    hq.heappop(self.candidates) # remove the worst in the candidates 
-                    hq.heappush(self.candidates, new_state)
+            self.candidates.append(new_state)
 
-        print(f'len candidates {len(self.candidates)}')
-        print(f'best in candidate {self.candidates[0].prefix[-1]}')
+            # add state to candidate while mantaining heap variants
+            # if len(self.candidates) < self.beam_width:
+            #     hq.heappush(self.candidates, new_state)
+            # else:
+            #     if new_state > self.candidates[0]: # candidates is min heap so the top is always the lowest prob
+            #         hq.heappop(self.candidates) # remove the worst in the candidates 
+            #         hq.heappush(self.candidates, new_state)
+
+        # print(f'len candidates {len(self.candidates)}')
+        # print(f'best in candidate {self.candidates[0].prefix[-1]}')
         # print(f'candidates {self.candidates}')
 
     def update_frontier(self):
         """Check if any node is the beam is complete. 
         If so, then add it to complete paths"""
 
+        self.candidates = sorted(self.candidates, reverse=True)[:self.beam_width]
         self.frontier = []
         for node in self.candidates:
             if node.prefix[-1] == self.eos_id: # path is complete 
