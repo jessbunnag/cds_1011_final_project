@@ -1,10 +1,9 @@
-
 import torch
-# from torchtext.data.metrics import bleu_score
-from torchmetrics import BLEUScore
-from nltk.translate.meteor_score import meteor_score
-from nltk.translate.bleu_score import modified_precision
-from nltk.translate.bleu_score import sentence_bleu
+from torchtext.data.metrics import bleu_score
+# from torchmetrics import BLEUScore
+# from nltk.translate.bleu_score import modified_precision
+# from nltk.translate.bleu_score import sentence_bleu
+# from nltk.translate.meteor_score import meteor_score
 from torchmetrics.text.rouge import ROUGEScore
 # from ignite.metrics import RougeL
 import numpy as np
@@ -78,24 +77,23 @@ def eval_metrics(preds_list, labels_list):
     Returns:
         X
     '''
-    # compute the BLEU score across all sentences for n in [1, 4]
-    ### from nltk.translate.bleu_score import modified_precision:
-    all_bleu_1 = []
-    all_bleu_2 = []
-    all_bleu_3 = []
-    all_bleu_4 = []
+    
+    # compute BLEU score:
+    weights1 = [1.0/1.0]
+    weights2 = [1.0/2.0, 1.0/2.0]
+    weights3 = [1.0/3.0, 1.0/3.0, 1.0/3.0]
+    weights4 = [1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0]
 
-    for idx in range(len(labels_list)):
-        all_bleu_1.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+1)))
-        all_bleu_2.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+2)))
-        all_bleu_3.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+3)))
-        all_bleu_4.append(modified_precision(labels_list[idx], preds_list[idx], n=(idx+4)))
+    bleu_1 = bleu_score(preds_list, labels_list, max_n=1, weights=weights1)
+    bleu_2 = bleu_score(preds_list, labels_list, max_n=2, weights=weights2)
+    bleu_3 = bleu_score(preds_list, labels_list, max_n=3, weights=weights3)
+    bleu_4 = bleu_score(preds_list, labels_list, max_n=4, weights=weights4)
 
-    # compute the meteor score:
-    all_meteor = []
+    # # compute the meteor score:
+    # all_meteor = []
 
-    for idx in range(len(labels_list)):
-        all_meteor.append(meteor_score(labels_list[idx], preds_list[idx]))
+    # for idx in range(len(labels_list)):
+    #     all_meteor.append(meteor_score(labels_list[idx], preds_list[idx]))
 
     # compute ROUGE-L:
 
@@ -115,11 +113,4 @@ def eval_metrics(preds_list, labels_list):
     #     all_bleu_3.append(metric3(preds_list[idx], labels_list[idx]).item())
     #     all_bleu_4.append(metric4(preds_list[idx], labels_list[idx]).item())
 
-    ### from torchtext.data.metrics import bleu_score:
-    # bleu_1 = bleu_score(preds_list, labels_list, max_n=1, weights=[1])
-    # bleu_2 = bleu_score(preds_list, labels_list, max_n=2, weights=[0.5, 0.5])
-    # bleu_3 = bleu_score(preds_list, labels_list, max_n=3, weights=[0.3333, 0.3333, 0.3334])
-    # bleu_4 = bleu_score(preds_list, labels_list, max_n=4, weights=[0.25, 0.25, 0.25, 0.25])
-
-
-    return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4), np.mean(all_meteor)
+    return bleu_1, bleu_2, bleu_3, bleu_4
