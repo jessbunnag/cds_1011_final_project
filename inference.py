@@ -1,36 +1,28 @@
-
 import torch
 from torchtext.data.metrics import bleu_score
-from nltk.translate import meteor_score
-from torchmetrics import BLEUScore
+# from torchmetrics import BLEUScore
+# from nltk.translate.bleu_score import modified_precision
+# from nltk.translate.bleu_score import sentence_bleu
 import numpy as np
+from nltk.translate.meteor_score import meteor_score
+import nltk
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+from torchmetrics.text.rouge import ROUGEScore
+# from ignite.metrics import RougeL
 
-PAD_ID = 0
-BOS_ID = 1
-EOS_ID = 2
 
 def unk_postprocessing(src, attn_scores_mat):
     '''
     Inputs:
         attn_scores_mat: 3D pytorch tensor of size (batch_size x max SRC sen len per batch x max TGT sen len per batch)
         src: 2D pytorch tensor of size (batch_size x max SRC sen len per batch)
-
     Returns:
         best_attn_labels: 2D pytorch tensor of size (batch_size x max TGT sen len per batch)
     '''
-    # first, find the SRC special tokens and put an attention of zero for those attention scores
-    # (so that they are never chosen for postprocessing replacement of <UNK>)
-    new_attn_scores_mat = torch.zeros(attn_scores_mat.size())
-    for sen_idx in range(attn_scores_mat.size(0)):
-        for src_idx in range(attn_scores_mat.size(1)):
-            attn_tensor = attn_scores_mat[sen_idx, src_idx, :]
-            src_id = src[sen_idx][src_idx]
-            if (src_id == PAD_ID) or (src_id == BOS_ID) or (src_id == EOS_ID):
-                attn_tensor = torch.zeros(attn_tensor.size())
-            new_attn_scores_mat[sen_idx, src_idx, :] = attn_tensor
-
     # get the src token index with the max attention for this time step
-    src_token_idx = torch.argmax(new_attn_scores_mat, dim=1)
+    src_token_idx = torch.argmax(attn_scores_mat, dim=1)
+    # print('src_token_idx SIZE', src_token_idx.size())
 
     # convert the index location in the src to the vocab class label for src
     best_attn_labels = torch.zeros(src_token_idx.size())
@@ -83,7 +75,6 @@ def eval_metrics(preds_list, labels_list):
     Inputs:
         preds_list: list of lists of tokens with the predicted TGTs
         labels_list: list of lists of tokens with the label TGTs
-
     Returns:
         X
     '''
@@ -93,22 +84,26 @@ def eval_metrics(preds_list, labels_list):
     all_bleu_3 = []
     all_bleu_4 = []
 
-    metric1 = BLEUScore(n_gram=1)
-    metric2 = BLEUScore(n_gram=2)
-    metric3 = BLEUScore(n_gram=3)
-    metric4 = BLEUScore(n_gram=4)
+    weights1 = [1.0/1.0]
+    weights2 = [1.0/2.0, 1.0/2.0]
+    weights3 = [1.0/3.0, 1.0/3.0, 1.0/3.0]
+    weights4 = [1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0]
+
     for idx in range(len(labels_list)):
-        all_bleu_1.append(metric1(preds_list[idx], labels_list[idx]).item())
-        all_bleu_2.append(metric2(preds_list[idx], labels_list[idx]).item())
-        all_bleu_3.append(metric3(preds_list[idx], labels_list[idx]).item())
-        all_bleu_4.append(metric4(preds_list[idx], labels_list[idx]).item())
+        all_bleu_1.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=1, weights=weights1))
+        all_bleu_2.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=2, weights=weights2))
+        all_bleu_3.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=3, weights=weights3))
+        all_bleu_4.append(bleu_score([preds_list[idx]], [[labels_list[idx]]], max_n=4, weights=weights4))
 
-    # bleu_1 = bleu_score(preds_list, labels_list, max_n=1, weights=[1])
-    # bleu_2 = bleu_score(preds_list, labels_list, max_n=2, weights=[0.5, 0.5])
-    # bleu_3 = bleu_score(preds_list, labels_list, max_n=3, weights=[0.3333, 0.3333, 0.3334])
-    # bleu_4 = bleu_score(preds_list, labels_list, max_n=4, weights=[0.25, 0.25, 0.25, 0.25])
+    # compute the METEOR score:
+    all_meteor = []
+    for idx in range(len(labels_list)):
+        all_meteor.append(meteor_score([labels_list[idx]], preds_list[idx]))
 
-    # compute the meteor score
-    meteor = 0
+    # compute ROUGE-L:
+    all_rougeL = []
+    rouge = ROUGEScore(rouge_keys='rougeL')
+    for idx in range(len(labels_list)):
+        all_rougeL.append(rouge(' '.join(preds_list[idx]), ' '.join(labels_list[idx])).get('rougeL_recall'))
 
-    return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4)
+    return np.mean(all_bleu_1), np.mean(all_bleu_2), np.mean(all_bleu_3), np.mean(all_bleu_4), np.mean(all_meteor), np.mean(all_rougeL)
