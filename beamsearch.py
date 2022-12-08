@@ -1,5 +1,6 @@
 import torch
 import heapq as hq
+import time
 
 class BeamNode(object):
     def __init__(self, log_prob, prefix, dec_output, dec_hidden, attn_score_mat):
@@ -82,7 +83,7 @@ class Beam(object):
     def update_frontier(self):
         """Check if any node is the beam is complete. 
         If so, then add it to complete paths"""
-
+        # start = time.time()
         # self.candidates = sorted(self.candidates, reverse=True)[:self.beam_width]
         self.frontier = []
         for node in self.candidates:
@@ -92,12 +93,9 @@ class Beam(object):
             else:
                 self.frontier.append(node)
 
-        # print(f'after updating frontier')
-        # for node in self.frontier:
-        #     print(node)
-        #     print(f'prefix {self.vocab.decode_idx2token(node.prefix) }')
         # reset candidates for next search
         self.candidates = []
+        # print(f'Update frontier finished in {time.time()-start}')
 
     def is_done(self):
         return self.beam_width == 0 or len(self.frontier) == 0
@@ -118,7 +116,7 @@ class Beam(object):
                 truncated_attn.append(node.attn_score_mat[:, 1:])
         return [self.vocab.decode_idx2token(path) for path in truncated_paths], truncated_attn
 
-
+@torch.no_grad()
 def beam_search(model, encoder_states, vocab, device, max_tgt_len, beam_width):
     """
     Parameters:
@@ -156,7 +154,7 @@ def beam_search(model, encoder_states, vocab, device, max_tgt_len, beam_width):
     best_paths, attn_mat = beam.get_best_k_paths(1)
     return best_paths[0], attn_mat[0]
             
-
+@torch.no_grad()
 def beam_search_batch(batch, model, vocab, device, beam_width=3,
         hidden_size=600, n_layers=2, transformer_encoder=False
     ):
@@ -197,7 +195,6 @@ def beam_search_batch(batch, model, vocab, device, beam_width=3,
             max_tgt_len=batch.target_lens[i] + 5, 
             beam_width=beam_width
         )
-        # print(f'predicted question: {best_path}')
    
         labels_list.append(batch.target_data[i])
         preds_list.append(best_path)
